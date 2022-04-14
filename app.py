@@ -14,6 +14,8 @@ AUTOTRAIN_USERNAME = os.getenv("AUTOTRAIN_USERNAME")
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 
 
+TASK_TO_ID = {"binary_classification":1, "multi_class_classification": 2, "multi_label_classification": 3, "entity_extraction": 4, "extractive_question_answering":5, "translation":6, "summarization":8, "single_column_regression":10}
+
 with st.form(key="form"):
 
     dataset_name = st.selectbox("Select a dataset to evaluate on", ["lewtun/autoevaluate__emotion"])
@@ -43,9 +45,9 @@ with st.form(key="form"):
         for model in selected_models:
             payload = {
                 "username": AUTOTRAIN_USERNAME,
-                "task": 1,
+                "task": TASK_TO_ID[metadata[0]["task_id"]],
                 "model": model,
-                "col_mapping": {"sentence": "text", "label": "target"},
+                "col_mapping": metadata[0]["col_mapping"],
                 "split": selected_split,
                 "dataset": original_dataset_name,
                 "config": dataset_config,
