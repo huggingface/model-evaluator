@@ -36,7 +36,9 @@ st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
     you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
-    select the dataset and configuration below.
+    select the dataset and configuration below. The results of your evaluation
+    will be displayed on the public leaderboard
+    [here](https://huggingface.co/spaces/huggingface/leaderboards).
     """
 )
 
