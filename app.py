@@ -26,7 +26,19 @@ TASK_TO_ID = {
 }
 
 # TODO: remove this hardcorded logic and accept any dataset on the Hub
-DATASETS_TO_EVALUATE = ["emotion", "conll2003"]
+DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb"]
+
+###########
+### APP ###
+###########
+st.title("Evaluation as a Service")
+st.markdown(
+    """
+    Welcome to Hugging Face's Evaluation as a Service! This application allows
+    you to evaluate any 🤗 Transformers model on the Hub. Please select the
+    dataset and configuration below.
+    """
+)
 
 dataset_name = st.selectbox("Select a dataset", [f"lewtun/autoevaluate__{dset}" for dset in DATASETS_TO_EVALUATE])
 
@@ -48,12 +60,14 @@ with st.form(key="form"):
     selected_split = st.selectbox("Select a split", split_names, index=split_names.index(eval_split))
 
     col_mapping = metadata[0]["col_mapping"]
-    col_names = list(col_mapping.values())
+    col_names = list(col_mapping.keys())
 
     # TODO: figure out how to get all dataset column names (i.e. features) without download dataset itself
     st.markdown("**Map your data columns**")
     col1, col2 = st.columns(2)
 
+    # TODO: find a better way to layout these items
+    # TODO: propagate this information to payload
     with col1:
         st.markdown("`text` column")
         st.text("")
@@ -69,7 +83,7 @@ with st.form(key="form"):
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models, compatible_models[0])
 
-    submit_button = st.form_submit_button("Make Submission")
+    submit_button = st.form_submit_button("Make submission")
 
     if submit_button:
         for model in selected_models:
@@ -85,5 +99,15 @@ with st.form(key="form"):
             json_resp = http_post(
                 path="/evaluate/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
             ).json()
+            if json_resp["status"] == 1:
+                st.success(f"✅ Successfully submitted model {model} for evaluation with job ID {json_resp['id']}")
+                st.markdown(
+                    f"""
+                Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-            st.success(f"✅ Successfully submitted model {model} for evaluation with job ID {json_resp['id']}")
+                * 📊 Click [here](https://huggingface.co/spaces/huggingface/leaderboards) to view the results from your submission
+                * 💾 Click [here](https://huggingface.co/datasets/autoevaluate/eval-staging-{json_resp['id']}) to view the stored predictions on the Hugging Face Hub
+                """
+                )
+            else:
+                st.error("🙈 Oh noes, there was an error submitting your submission!")
