@@ -32,6 +32,6 @@ def get_metadata(dataset_name):
 
 
 def get_compatible_models(task, dataset_name):
-    filt = ModelFilter(task=task, trained_dataset=dataset_name)
+    filt = ModelFilter(task=task, trained_dataset=dataset_name, library="transformers")
     compatible_models = api.list_models(filter=filt)
     return [model.modelId for model in compatible_models]

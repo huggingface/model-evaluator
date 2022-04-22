@@ -14,11 +14,23 @@ AUTOTRAIN_USERNAME = os.getenv("AUTOTRAIN_USERNAME")
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 
 
-TASK_TO_ID = {"binary_classification":1, "multi_class_classification": 2, "multi_label_classification": 3, "entity_extraction": 4, "extractive_question_answering":5, "translation":6, "summarization":8, "single_column_regression":10}
+TASK_TO_ID = {
+    "binary_classification": 1,
+    "multi_class_classification": 2,
+    "multi_label_classification": 3,
+    "entity_extraction": 4,
+    "extractive_question_answering": 5,
+    "translation": 6,
+    "summarization": 8,
+    "single_column_regression": 10,
+}
+
+# TODO: remove this hardcorded logic and accept any dataset on the Hub
+DATASETS_TO_EVALUATE = ["emotion", "conll2003"]
+
+dataset_name = st.selectbox("Select a dataset", [f"lewtun/autoevaluate__{dset}" for dset in DATASETS_TO_EVALUATE])
 
 with st.form(key="form"):
-
-    dataset_name = st.selectbox("Select a dataset to evaluate on", ["lewtun/autoevaluate__emotion"])
 
     # TODO: remove this step once we select real datasets
     # Strip out original dataset name
@@ -27,13 +39,31 @@ with st.form(key="form"):
     # In general this will be a list of multiple configs => need to generalise logic here
     metadata = get_metadata(dataset_name)
 
-    dataset_config = st.selectbox("Select the subset to evaluate on", [metadata[0]["config"]])
+    dataset_config = st.selectbox("Select a config", [metadata[0]["config"]])
 
     splits = metadata[0]["splits"]
     split_names = list(splits.values())
     eval_split = splits.get("eval_split", split_names[0])
 
-    selected_split = st.selectbox("Select the split to evaluate on", split_names, index=split_names.index(eval_split))
+    selected_split = st.selectbox("Select a split", split_names, index=split_names.index(eval_split))
+
+    col_mapping = metadata[0]["col_mapping"]
+    col_names = list(col_mapping.values())
+
+    # TODO: figure out how to get all dataset column names (i.e. features) without download dataset itself
+    st.markdown("**Map your data columns**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("`text` column")
+        st.text("")
+        st.text("")
+        st.text("")
+        st.text("")
+        st.markdown("`target` column")
+    with col2:
+        st.selectbox("This column should contain the text you want to classify", col_names, index=0)
+        st.selectbox("This column should contain the labels you want to assign to the text", col_names, index=1)
 
     compatible_models = get_compatible_models(metadata[0]["task"], original_dataset_name)
 
