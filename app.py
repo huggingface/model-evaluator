@@ -26,7 +26,7 @@ TASK_TO_ID = {
 }
 
 # TODO: remove this hardcorded logic and accept any dataset on the Hub
-DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb"]
+DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb", "squad"]
 
 ###########
 ### APP ###
