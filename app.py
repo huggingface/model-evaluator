@@ -26,7 +26,7 @@ TASK_TO_ID = {
 }
 
 # TODO: remove this hardcorded logic and accept any dataset on the Hub
-DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb", "squad"]
+DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb", "squad", "xsum", "ncbi_disease"]
 
 ###########
 ### APP ###
@@ -35,8 +35,8 @@ st.title("Evaluation as a Service")
 st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
-    you to evaluate any 🤗 Transformers model on the Hub. Please select the
-    dataset and configuration below.
+    you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
+    select the dataset and configuration below.
     """
 )
 
@@ -59,6 +59,7 @@ with st.form(key="form"):
 
     selected_split = st.selectbox("Select a split", split_names, index=split_names.index(eval_split))
 
+    # TODO: add a function to handle the mapping task <--> column mapping
     col_mapping = metadata[0]["col_mapping"]
     col_names = list(col_mapping.keys())
 
