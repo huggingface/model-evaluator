@@ -111,7 +111,6 @@ with st.form(key="form"):
                 Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
                 * 📊 Click [here](https://huggingface.co/spaces/huggingface/leaderboards) to view the results from your submission
-                * 💾 Click [here](https://huggingface.co/datasets/autoevaluate/eval-staging-{json_resp['id']}) to view the stored predictions on the Hugging Face Hub
                 """
                 )
             else:
