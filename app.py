@@ -44,14 +44,14 @@ st.markdown(
 
 dataset_name = st.selectbox("Select a dataset", [f"lewtun/autoevaluate__{dset}" for dset in DATASETS_TO_EVALUATE])
 
-with st.form(key="form"):
+# TODO: remove this step once we select real datasets
+# Strip out original dataset name
+original_dataset_name = dataset_name.split("/")[-1].split("__")[-1]
 
-    # TODO: remove this step once we select real datasets
-    # Strip out original dataset name
-    original_dataset_name = dataset_name.split("/")[-1].split("__")[-1]
+# In general this will be a list of multiple configs => need to generalise logic here
+metadata = get_metadata(dataset_name)
 
-    # In general this will be a list of multiple configs => need to generalise logic here
-    metadata = get_metadata(dataset_name)
+with st.expander("Advanced configuration"):
 
     dataset_config = st.selectbox("Select a config", [metadata[0]["config"]])
 
@@ -81,6 +81,8 @@ with st.form(key="form"):
     with col2:
         st.selectbox("This column should contain the text you want to classify", col_names, index=0)
         st.selectbox("This column should contain the labels you want to assign to the text", col_names, index=1)
+
+with st.form(key="form"):
 
     compatible_models = get_compatible_models(metadata[0]["task"], original_dataset_name)
 
