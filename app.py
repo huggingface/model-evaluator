@@ -53,7 +53,10 @@ if "dataset" in query_params:
 dataset_name = st.selectbox(
     "Select a dataset",
     selectable_datasets,
-    index=selectable_datasets.index(default_dataset))
+    index=selectable_datasets.index(default_dataset)
+)
+
+st.experimental_set_query_params(**{"dataset": [dataset]})
 
 # TODO: remove this step once we select real datasets
 # Strip out original dataset name
