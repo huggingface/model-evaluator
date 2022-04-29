@@ -29,19 +29,6 @@ TASK_TO_ID = {
     # "single_column_regression": 10,
 }
 
-AUTOTRAIN_TASK_TO_HUB_TASK = {
-    "binary_classification": "text-classification",
-    "multi_class_classification": "text-classification",
-    # "multi_label_classification": "text-classification", # Not fully supported in AutoTrain
-    "entity_extraction": "token-classification",
-    "extractive_question_answering": "question-answering",
-    "translation": "translation",
-    "summarization": "summarization",
-    # "single_column_regression": 10,
-}
-
-HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items()}
-
 ###########
 ### APP ###
 ###########
@@ -74,7 +61,7 @@ if metadata is None:
 
 with st.expander("Advanced configuration"):
     ## Select task
-    selected_task = st.selectbox("Select a task", list(AUTOTRAIN_TASK_TO_HUB_TASK.values()))
+    selected_task = st.selectbox("Select a task", list(TASK_TO_ID.keys()))
     ### Select config
     configs = get_dataset_config_names(selected_dataset)
     selected_config = st.selectbox("Select a config", configs)
@@ -84,9 +71,7 @@ with st.expander("Advanced configuration"):
     if splits_resp.status_code == 200:
         split_names = []
         all_splits = splits_resp.json()
-        print(all_splits)
         for split in all_splits["splits"]:
-            print(selected_config)
             if split["config"] == selected_config:
                 split_names.append(split["split"])
 
@@ -120,7 +105,7 @@ with st.expander("Advanced configuration"):
     # TODO: make it task specific
     col_mapping = {}
     with col1:
-        if selected_task == "text-classification":
+        if selected_task in ["binary_classification", "multi_class_classification"]:
             st.markdown("`text` column")
             st.text("")
             st.text("")
@@ -153,11 +138,10 @@ with st.form(key="form"):
 
     if submit_button:
         project_id = str(uuid.uuid4())[:3]
-        autotrain_task_name = HUB_TASK_TO_AUTOTRAIN_TASK[selected_task]
         payload = {
             "username": AUTOTRAIN_USERNAME,
             "proj_name": f"my-eval-project-{project_id}",
-            "task": TASK_TO_ID[autotrain_task_name],
+            "task": TASK_TO_ID[selected_task],
             "config": {
                 "language": "en",
                 "max_models": 5,
@@ -181,7 +165,7 @@ with st.form(key="form"):
 
         if project_json_resp["created"]:
             payload = {
-                "split": 4,
+                "split": 4,  # use "auto" split choice in AutoTrain
                 "col_mapping": col_mapping,
                 "load_config": {"max_size_bytes": 0, "shuffle": False},
             }

@@ -3,6 +3,19 @@ from typing import Dict, Union
 import requests
 from huggingface_hub import DatasetFilter, HfApi, ModelFilter
 
+AUTOTRAIN_TASK_TO_HUB_TASK = {
+    "binary_classification": "text-classification",
+    "multi_class_classification": "text-classification",
+    # "multi_label_classification": "text-classification", # Not fully supported in AutoTrain
+    "entity_extraction": "token-classification",
+    "extractive_question_answering": "question-answering",
+    "translation": "translation",
+    "summarization": "summarization",
+    # "single_column_regression": 10,
+}
+
+HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items()}
+
 api = HfApi()
 
 
@@ -44,6 +57,6 @@ def get_metadata(dataset_name: str) -> Union[Dict, None]:
 
 
 def get_compatible_models(task, dataset_name):
-    filt = ModelFilter(task=task, trained_dataset=dataset_name, library="transformers")
+    filt = ModelFilter(task=AUTOTRAIN_TASK_TO_HUB_TASK[task], trained_dataset=dataset_name, library="transformers")
     compatible_models = api.list_models(filter=filt)
     return [model.modelId for model in compatible_models]
