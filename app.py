@@ -112,7 +112,6 @@ with st.expander("Advanced configuration"):
     # col_mapping = metadata[0]["col_mapping"]
     # col_names = list(col_mapping.keys())
 
-    # TODO: figure out how to get all dataset column names (i.e. features) without download dataset itself
     st.markdown("**Map your data columns**")
     col1, col2 = st.columns(2)
 
