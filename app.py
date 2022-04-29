@@ -20,7 +20,7 @@ DATASETS_PREVIEW_API = os.getenv("DATASETS_PREVIEW_API")
 TASK_TO_ID = {
     "binary_classification": 1,
     "multi_class_classification": 2,
-    "multi_label_classification": 3,
+    # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
     "translation": 6,
@@ -31,16 +31,13 @@ TASK_TO_ID = {
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
     "multi_class_classification": "text-classification",
-    "multi_label_classification": "text-classification",
+    # "multi_label_classification": "text-classification", # Not fully supported in AutoTrain
     "entity_extraction": "token-classification",
     "extractive_question_answering": "question-answering",
     "translation": "translation",
     "summarization": "summarization",
     "single_column_regression": 10,
 }
-
-# TODO: remove this hardcorded logic and accept any dataset on the Hub
-# DATASETS_TO_EVALUATE = ["emotion", "conll2003", "imdb", "squad", "xsum", "ncbi_disease", "go_emotions"]
 
 ###########
 ### APP ###
@@ -52,13 +49,19 @@ st.markdown(
     you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
     select the dataset and configuration below. The results of your evaluation
     will be displayed on the public leaderboard
-    [here](https://huggingface.co/spaces/huggingface/leaderboards).
+    [here](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
 
 all_datasets = [d.id for d in list_datasets()]
-selected_dataset = st.selectbox("Select a dataset", all_datasets)
-print(f"Dataset name: {selected_dataset}")
+query_params = st.experimental_get_query_params()
+default_dataset = all_datasets[0]
+if "dataset" in query_params:
+    if len(query_params["dataset"]) > 0 and query_params["dataset"][0] in all_datasets:
+        default_dataset = query_params["dataset"][0]
+
+selected_dataset = st.selectbox("Select a dataset", all_datasets, index=all_datasets.index(default_dataset))
+st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 # TODO: remove this step once we select real datasets
 # Strip out original dataset name
@@ -165,45 +168,45 @@ with st.form(key="form"):
     # else:
     #     st.error("🙈 Oh noes, there was an error submitting your submission!")
 
-    # st.write("Creating project!")
-    # payload = {
-    #     "username": AUTOTRAIN_USERNAME,
-    #     "proj_name": "my-eval-project-1",
-    #     "task": TASK_TO_ID[metadata[0]["task_id"]],
-    #     "config": {
-    #         "language": "en",
-    #         "max_models": 5,
-    #         "instance": {
-    #             "provider": "aws",
-    #             "instance_type": "ml.g4dn.4xlarge",
-    #             "max_runtime_seconds": 172800,
-    #             "num_instances": 1,
-    #             "disk_size_gb": 150,
-    #         },
-    #     },
-    # }
-    # json_resp = http_post(
-    #     path="/projects/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
-    # ).json()
-    # # print(json_resp)
+        # st.write("Creating project!")
+        # payload = {
+        #     "username": AUTOTRAIN_USERNAME,
+        #     "proj_name": "my-eval-project-1",
+        #     "task": TASK_TO_ID[metadata[0]["task_id"]],
+        #     "config": {
+        #         "language": "en",
+        #         "max_models": 5,
+        #         "instance": {
+        #             "provider": "aws",
+        #             "instance_type": "ml.g4dn.4xlarge",
+        #             "max_runtime_seconds": 172800,
+        #             "num_instances": 1,
+        #             "disk_size_gb": 150,
+        #         },
+        #     },
+        # }
+        # json_resp = http_post(
+        #     path="/projects/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
+        # ).json()
+        # # print(json_resp)
 
-    # # st.write("Uploading data")
-    # payload = {
-    #     "split": 4,
-    #     "col_mapping": metadata[0]["col_mapping"],
-    #     "load_config": {"max_size_bytes": 0, "shuffle": False},
-    # }
-    # json_resp = http_post(
-    #     path="/projects/522/data/emotion",
-    #     payload=payload,
-    #     token=HF_TOKEN,
-    #     domain=AUTOTRAIN_BACKEND_API,
-    #     params={"type": "dataset", "config_name": "default", "split_name": "train"},
-    # ).json()
-    # print(json_resp)
+        # # st.write("Uploading data")
+        # payload = {
+        #     "split": 4,
+        #     "col_mapping": metadata[0]["col_mapping"],
+        #     "load_config": {"max_size_bytes": 0, "shuffle": False},
+        # }
+        # json_resp = http_post(
+        #     path="/projects/522/data/emotion",
+        #     payload=payload,
+        #     token=HF_TOKEN,
+        #     domain=AUTOTRAIN_BACKEND_API,
+        #     params={"type": "dataset", "config_name": "default", "split_name": "train"},
+        # ).json()
+        # print(json_resp)
 
-    # st.write("Training")
-    # json_resp = http_get(
-    #     path="/projects/522/data/start_process", token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
-    # ).json()
-    # print(json_resp)
+        # st.write("Training")
+        # json_resp = http_get(
+        #     path="/projects/522/data/start_process", token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
+        # ).json()
+        # print(json_resp)
