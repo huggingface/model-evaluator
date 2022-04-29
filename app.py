@@ -2,6 +2,7 @@ import os
 import uuid
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 from datasets import get_dataset_config_names
 from dotenv import load_dotenv
@@ -83,10 +84,7 @@ with st.expander("Advanced configuration"):
         domain="https://datasets-preview.huggingface.tech",
         params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
     ).json()
-    columns = rows_resp["columns"]
-    col_names = []
-    for c in columns:
-        col_names.append(c["column"]["name"])
+    col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
     # splits = metadata[0]["splits"]
     # split_names = list(splits.values())
     # eval_split = splits.get("eval_split", split_names[0])
@@ -104,28 +102,105 @@ with st.expander("Advanced configuration"):
     # TODO: propagate this information to payload
     # TODO: make it task specific
     col_mapping = {}
-    with col1:
-        if selected_task in ["binary_classification", "multi_class_classification"]:
+    if selected_task in ["binary_classification", "multi_class_classification"]:
+        with col1:
             st.markdown("`text` column")
             st.text("")
             st.text("")
             st.text("")
             st.text("")
             st.markdown("`target` column")
-        elif selected_task == "question-answering":
+        with col2:
+            text_col = st.selectbox("This column should contain the text you want to classify", col_names)
+            target_col = st.selectbox(
+                "This column should contain the labels you want to assign to the text", col_names
+            )
+            col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "entity_extraction":
+        with col1:
+            st.markdown("`tokens` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`tags` column")
+        with col2:
+            tokens_col = st.selectbox(
+                "This column should contain the parts of the text (as an array of tokens) you want to assign labels to",
+                col_names,
+            )
+            tags_col = st.selectbox(
+                "This column should contain the labels to associate to each part of the text", col_names
+            )
+            col_mapping[tokens_col] = "tokens"
+            col_mapping[tags_col] = "tags"
+
+    elif selected_task == "translation":
+        with col1:
+            st.markdown("`source` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text_col = st.selectbox("This column should contain the text you want to translate", col_names)
+            target_col = st.selectbox(
+                "This column should contain an example translation of the source text", col_names
+            )
+            col_mapping[text_col] = "source"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "summarization":
+        with col1:
+            st.markdown("`text` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text_col = st.selectbox("This column should contain the text you want to summarize", col_names)
+            target_col = st.selectbox("This column should contain an example summarization of the text", col_names)
+            col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "extractive_question_answering":
+        with col1:
             st.markdown("`context` column")
             st.text("")
             st.text("")
             st.text("")
             st.text("")
             st.markdown("`question` column")
-    with col2:
-        text_col = st.selectbox("This column should contain the text you want to classify", col_names, index=0)
-        target_col = st.selectbox(
-            "This column should contain the labels you want to assign to the text", col_names, index=1
-        )
-        col_mapping[text_col] = "text"
-        col_mapping[target_col] = "target"
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`answers.text` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`answers.answer_start` column")
+        with col2:
+            context_col = st.selectbox("This column should contain the question's context", col_names)
+            question_col = st.selectbox(
+                "This column should contain the question to be answered, given the context", col_names
+            )
+            answers_text_col = st.selectbox(
+                "This column should contain example answers to the question, extracted from the context", col_names
+            )
+            answers_start_col = st.selectbox(
+                "This column should contain the indices in the context of the first character of each answers.text",
+                col_names,
+            )
+            col_mapping[context_col] = "context"
+            col_mapping[question_col] = "question"
+            col_mapping[answers_text_col] = "answers.text"
+            col_mapping[answers_start_col] = "answers.answer_start"
 
 with st.form(key="form"):
 
@@ -158,6 +233,7 @@ with st.form(key="form"):
                 },
             },
         }
+        print(f"Payload: {payload}")
         project_json_resp = http_post(
             path="/projects/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
         ).json()

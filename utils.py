@@ -57,6 +57,9 @@ def get_metadata(dataset_name: str) -> Union[Dict, None]:
 
 
 def get_compatible_models(task, dataset_name):
-    filt = ModelFilter(task=AUTOTRAIN_TASK_TO_HUB_TASK[task], trained_dataset=dataset_name, library="transformers")
+    # TODO: relax filter on PyTorch models once supported in AutoTrain
+    filt = ModelFilter(
+        task=AUTOTRAIN_TASK_TO_HUB_TASK[task], trained_dataset=dataset_name, library=["transformers", "pytorch"]
+    )
     compatible_models = api.list_models(filter=filt)
     return [model.modelId for model in compatible_models]
