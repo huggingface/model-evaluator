@@ -38,11 +38,25 @@ st.markdown(
     you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
     select the dataset and configuration below. The results of your evaluation
     will be displayed on the public leaderboard
-    [here](https://huggingface.co/spaces/huggingface/leaderboards).
+    [here](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
 
-dataset_name = st.selectbox("Select a dataset", [f"lewtun/autoevaluate__{dset}" for dset in DATASETS_TO_EVALUATE])
+selectable_datasets = [f"lewtun/autoevaluate__{dset}" for dset in DATASETS_TO_EVALUATE]
+
+query_params = st.experimental_get_query_params()
+default_dataset = selectable_datasets[0]
+if "dataset" in query_params:
+    if len(query_params["dataset"]) > 0 and query_params["dataset"][0] in selectable_datasets:
+        default_dataset = query_params["dataset"][0]
+
+dataset_name = st.selectbox(
+    "Select a dataset",
+    selectable_datasets,
+    index=selectable_datasets.index(default_dataset)
+)
+
+st.experimental_set_query_params(**{"dataset": [dataset]})
 
 # TODO: remove this step once we select real datasets
 # Strip out original dataset name
@@ -110,7 +124,7 @@ with st.form(key="form"):
                     f"""
                 Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-                * 📊 Click [here](https://huggingface.co/spaces/huggingface/leaderboards) to view the results from your submission
+                * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the results from your submission
                 """
                 )
             else:
