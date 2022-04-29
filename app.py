@@ -27,7 +27,6 @@ TASK_TO_ID = {
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
-    # "single_column_regression": 10,
 }
 
 ###########
@@ -99,8 +98,6 @@ with st.expander("Advanced configuration"):
     col1, col2 = st.columns(2)
 
     # TODO: find a better way to layout these items
-    # TODO: propagate this information to payload
-    # TODO: make it task specific
     col_mapping = {}
     if selected_task in ["binary_classification", "multi_class_classification"]:
         with col1:
@@ -208,7 +205,7 @@ with st.form(key="form"):
 
     selected_models = st.multiselect(
         "Select the models you wish to evaluate", compatible_models
-    )  # , compatible_models[0])
+    )
     submit_button = st.form_submit_button("Make submission")
 
     if submit_button:
