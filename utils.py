@@ -48,10 +48,9 @@ def http_get(path: str, domain: str, token: str = None, params: dict = None) -> 
 
 
 def get_metadata(dataset_name: str) -> Union[Dict, None]:
-    filt = DatasetFilter(dataset_name=dataset_name)
-    data = api.list_datasets(filter=filt, full=True)
-    if data[0].cardData is not None and "train-eval-index" in data[0].cardData.keys():
-        return data[0].cardData["train-eval-index"]
+    data = requests.get(f"https://huggingface.co/api/datasets/{dataset_name}").json()
+    if data["cardData"] is not None and "train-eval-index" in data["cardData"].keys():
+        return data["cardData"]["train-eval-index"]
     else:
         return None
 
@@ -63,3 +62,11 @@ def get_compatible_models(task, dataset_name):
     )
     compatible_models = api.list_models(filter=filt)
     return [model.modelId for model in compatible_models]
+
+
+def get_key(col_mapping, val):
+    for key, value in col_mapping.items():
+        if val == value:
+            return key
+
+    return "key doesn't exist"
