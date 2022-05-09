@@ -8,7 +8,8 @@ from datasets import get_dataset_config_names
 from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
-from utils import get_compatible_models, get_metadata, http_get, http_post
+from utils import (get_compatible_models, get_key, get_metadata, http_get,
+                   http_post)
 
 if Path(".env").is_file():
     load_dotenv(".env")
@@ -28,6 +29,9 @@ TASK_TO_ID = {
     "translation": 6,
     "summarization": 8,
 }
+
+supported_tasks = list(TASK_TO_ID.keys())
+
 
 ###########
 ### APP ###
@@ -61,7 +65,11 @@ if metadata is None:
 
 with st.expander("Advanced configuration"):
     ## Select task
-    selected_task = st.selectbox("Select a task", list(TASK_TO_ID.keys()))
+    selected_task = st.selectbox(
+        "Select a task",
+        supported_tasks,
+        index=supported_tasks.index(metadata[0]["task_id"]) if metadata is not None else 0,
+    )
     ### Select config
     configs = get_dataset_config_names(selected_dataset)
     selected_config = st.selectbox("Select a config", configs)
@@ -75,29 +83,25 @@ with st.expander("Advanced configuration"):
             if split["config"] == selected_config:
                 split_names.append(split["split"])
 
-        selected_split = st.selectbox("Select a split", split_names)  # , index=split_names.index(eval_split))
+        selected_split = st.selectbox(
+            "Select a split",
+            split_names,
+            index=split_names.index(metadata[0]["splits"]["eval_split"]) if metadata is not None else 0,
+        )
 
-    ## Show columns
+    ## Select columns
     rows_resp = http_get(
         path="/rows",
         domain="https://datasets-preview.huggingface.tech",
         params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
-    # splits = metadata[0]["splits"]
-    # split_names = list(splits.values())
-    # eval_split = splits.get("eval_split", split_names[0])
-
-    # selected_split = st.selectbox("Select a split", split_names, index=split_names.index(eval_split))
-
-    # TODO: add a function to handle the mapping task <--> column mapping
-    # col_mapping = metadata[0]["col_mapping"]
-    # col_names = list(col_mapping.keys())
 
     st.markdown("**Map your data columns**")
     col1, col2 = st.columns(2)
 
     # TODO: find a better way to layout these items
+    # TODO: need graceful way of handling dataset <--> task mismatch for datasets with metadata
     col_mapping = {}
     if selected_task in ["binary_classification", "multi_class_classification"]:
         with col1:
@@ -108,9 +112,15 @@ with st.expander("Advanced configuration"):
             st.text("")
             st.markdown("`target` column")
         with col2:
-            text_col = st.selectbox("This column should contain the text you want to classify", col_names)
+            text_col = st.selectbox(
+                "This column should contain the text you want to classify",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+            )
             target_col = st.selectbox(
-                "This column should contain the labels you want to assign to the text", col_names
+                "This column should contain the labels you want to assign to the text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
@@ -127,9 +137,12 @@ with st.expander("Advanced configuration"):
             tokens_col = st.selectbox(
                 "This column should contain the parts of the text (as an array of tokens) you want to assign labels to",
                 col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "tokens")) if metadata is not None else 0,
             )
             tags_col = st.selectbox(
-                "This column should contain the labels to associate to each part of the text", col_names
+                "This column should contain the labels to associate to each part of the text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "tags")) if metadata is not None else 0,
             )
             col_mapping[tokens_col] = "tokens"
             col_mapping[tags_col] = "tags"
@@ -143,9 +156,15 @@ with st.expander("Advanced configuration"):
             st.text("")
             st.markdown("`target` column")
         with col2:
-            text_col = st.selectbox("This column should contain the text you want to translate", col_names)
+            text_col = st.selectbox(
+                "This column should contain the text you want to translate",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "source")) if metadata is not None else 0,
+            )
             target_col = st.selectbox(
-                "This column should contain an example translation of the source text", col_names
+                "This column should contain an example translation of the source text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
             col_mapping[text_col] = "source"
             col_mapping[target_col] = "target"
@@ -159,8 +178,16 @@ with st.expander("Advanced configuration"):
             st.text("")
             st.markdown("`target` column")
         with col2:
-            text_col = st.selectbox("This column should contain the text you want to summarize", col_names)
-            target_col = st.selectbox("This column should contain an example summarization of the text", col_names)
+            text_col = st.selectbox(
+                "This column should contain the text you want to summarize",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain an example summarization of the text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+            )
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
 
@@ -183,16 +210,29 @@ with st.expander("Advanced configuration"):
             st.text("")
             st.markdown("`answers.answer_start` column")
         with col2:
-            context_col = st.selectbox("This column should contain the question's context", col_names)
+            context_col = st.selectbox(
+                "This column should contain the question's context",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "context")) if metadata is not None else 0,
+            )
             question_col = st.selectbox(
-                "This column should contain the question to be answered, given the context", col_names
+                "This column should contain the question to be answered, given the context",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "question")) if metadata is not None else 0,
             )
             answers_text_col = st.selectbox(
-                "This column should contain example answers to the question, extracted from the context", col_names
+                "This column should contain example answers to the question, extracted from the context",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.text"))
+                if metadata is not None
+                else 0,
             )
             answers_start_col = st.selectbox(
                 "This column should contain the indices in the context of the first character of each answers.text",
                 col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.answer_start"))
+                if metadata is not None
+                else 0,
             )
             col_mapping[context_col] = "context"
             col_mapping[question_col] = "question"
@@ -203,9 +243,8 @@ with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
 
-    selected_models = st.multiselect(
-        "Select the models you wish to evaluate", compatible_models
-    )
+    selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
+    print("Selected models:", selected_models)
     submit_button = st.form_submit_button("Make submission")
 
     if submit_button:
