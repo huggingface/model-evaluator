@@ -92,7 +92,7 @@ with st.expander("Advanced configuration"):
     ## Select columns
     rows_resp = http_get(
         path="/rows",
-        domain="https://datasets-preview.huggingface.tech",
+        domain=DATASETS_PREVIEW_API,
         params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
