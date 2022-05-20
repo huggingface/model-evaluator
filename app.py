@@ -30,7 +30,7 @@ TASK_TO_ID = {
     "summarization": 8,
 }
 
-supported_tasks = list(TASK_TO_ID.keys())
+SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
 
 ###########
@@ -58,8 +58,8 @@ selected_dataset = st.selectbox("Select a dataset", all_datasets, index=all_data
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 
-# TODO: In general this will be a list of multiple configs => need to generalise logic here
 metadata = get_metadata(selected_dataset)
+print(metadata)
 if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
 
@@ -67,8 +67,8 @@ with st.expander("Advanced configuration"):
     ## Select task
     selected_task = st.selectbox(
         "Select a task",
-        supported_tasks,
-        index=supported_tasks.index(metadata[0]["task_id"]) if metadata is not None else 0,
+        SUPPORTED_TASKS,
+        index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
     )
     ### Select config
     configs = get_dataset_config_names(selected_dataset)
@@ -192,6 +192,9 @@ with st.expander("Advanced configuration"):
             col_mapping[target_col] = "target"
 
     elif selected_task == "extractive_question_answering":
+        col_mapping = metadata[0]["col_mapping"]
+        # Hub YAML parser converts periods to hyphens, so we remap them here
+        col_mapping = {k.replace("-", "."): v.replace("-", ".") for k, v in col_mapping.items()}
         with col1:
             st.markdown("`context` column")
             st.text("")
@@ -213,26 +216,22 @@ with st.expander("Advanced configuration"):
             context_col = st.selectbox(
                 "This column should contain the question's context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "context")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "context")) if metadata is not None else 0,
             )
             question_col = st.selectbox(
                 "This column should contain the question to be answered, given the context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "question")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "question")) if metadata is not None else 0,
             )
             answers_text_col = st.selectbox(
                 "This column should contain example answers to the question, extracted from the context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.text"))
-                if metadata is not None
-                else 0,
+                index=col_names.index(get_key(col_mapping, "answers.text")) if metadata is not None else 0,
             )
             answers_start_col = st.selectbox(
                 "This column should contain the indices in the context of the first character of each answers.text",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.answer_start"))
-                if metadata is not None
-                else 0,
+                index=col_names.index(get_key(col_mapping, "answers.answer_start")) if metadata is not None else 0,
             )
             col_mapping[context_col] = "context"
             col_mapping[question_col] = "question"
