@@ -193,6 +193,7 @@ with st.expander("Advanced configuration"):
 
     elif selected_task == "extractive_question_answering":
         col_mapping = metadata[0]["col_mapping"]
+        # Hub YAML parser converts periods to hyphens, so we remap them here
         col_mapping = {k.replace("-", "."): v.replace("-", ".") for k, v in col_mapping.items()}
         with col1:
             st.markdown("`context` column")
