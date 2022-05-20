@@ -21,5 +21,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git pull https://lewtun:$HF_TOKEN@huggingface.co/spaces/autoevaluate/autoevaluate main --rebase 
           git push https://lewtun:$HF_TOKEN@huggingface.co/spaces/autoevaluate/autoevaluate main
