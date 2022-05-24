@@ -27,7 +27,11 @@ def http_post(path: str, token: str, payload=None, domain: str = None, params=No
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
         response = requests.post(
-            url=domain + path, json=payload, headers=get_auth_headers(token=token), allow_redirects=True, params=params
+            url=domain + path,
+            json=payload,
+            headers=get_auth_headers(token=token),
+            allow_redirects=True,
+            params=params,
         )
     except requests.exceptions.ConnectionError:
         print("❌ Failed to reach AutoNLP API, check your internet connection")
@@ -39,7 +43,10 @@ def http_get(path: str, domain: str, token: str = None, params: dict = None) -> 
     """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
     try:
         response = requests.get(
-            url=domain + path, headers=get_auth_headers(token=token), allow_redirects=True, params=params
+            url=domain + path,
+            headers=get_auth_headers(token=token),
+            allow_redirects=True,
+            params=params,
         )
     except requests.exceptions.ConnectionError:
         print("❌ Failed to reach AutoNLP API, check your internet connection")
@@ -58,7 +65,9 @@ def get_metadata(dataset_name: str) -> Union[Dict, None]:
 def get_compatible_models(task, dataset_name):
     # TODO: relax filter on PyTorch models once supported in AutoTrain
     filt = ModelFilter(
-        task=AUTOTRAIN_TASK_TO_HUB_TASK[task], trained_dataset=dataset_name, library=["transformers", "pytorch"]
+        task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
+        trained_dataset=dataset_name,
+        library=["transformers", "pytorch"],
     )
     compatible_models = api.list_models(filter=filt)
     return [model.modelId for model in compatible_models]
