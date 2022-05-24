@@ -70,7 +70,7 @@ def get_compatible_models(task, dataset_name):
         library=["transformers", "pytorch"],
     )
     compatible_models = api.list_models(filter=filt)
-    return [model.modelId for model in compatible_models]
+    return sorted([model.modelId for model in compatible_models])
 
 
 def get_key(col_mapping, val):
@@ -79,3 +79,10 @@ def get_key(col_mapping, val):
             return key
 
     return "key doesn't exist"
+
+
+def format_col_mapping(col_mapping: dict) -> dict:
+    for k, v in col_mapping["answers"].items():
+        col_mapping[f"answers.{k}"] = f"answers.{v}"
+    del col_mapping["answers"]
+    return col_mapping

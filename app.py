@@ -9,7 +9,14 @@ from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
 from evaluation import filter_evaluated_models
-from utils import get_compatible_models, get_key, get_metadata, http_get, http_post
+from utils import (
+    format_col_mapping,
+    get_compatible_models,
+    get_key,
+    get_metadata,
+    http_get,
+    http_post,
+)
 
 if Path(".env").is_file():
     load_dotenv(".env")
@@ -26,7 +33,7 @@ TASK_TO_ID = {
     # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
-    # "translation": 6, $ Not fully supported in AutoTrain evaluation
+    # "translation": 6, # Not fully supported in AutoTrain evaluation
     "summarization": 8,
 }
 
@@ -202,7 +209,7 @@ with st.expander("Advanced configuration"):
     elif selected_task == "extractive_question_answering":
         col_mapping = metadata[0]["col_mapping"]
         # Hub YAML parser converts periods to hyphens, so we remap them here
-        col_mapping = {k.replace("-", "."): v.replace("-", ".") for k, v in col_mapping.items()}
+        col_mapping = format_col_mapping(col_mapping)
         with col1:
             st.markdown("`context` column")
             st.text("")
@@ -332,6 +339,6 @@ with st.form(key="form"):
                         """
                         )
                     else:
-                        st.error("🙈 Oh noes, there was an error submitting your evaluation job!")
+                        st.error("🙈 Oh no, there was an error submitting your evaluation job!")
         else:
             st.warning("⚠️ No models were selected for evaluation!")

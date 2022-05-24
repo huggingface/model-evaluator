@@ -1,6 +1,6 @@
 ---
 title: AutoEvaluate
-emoji: 🏢
+emoji: 📊
 colorFrom: red
 colorTo: red
 sdk: streamlit
@@ -22,6 +22,6 @@ The table below shows which tasks are currently supported for evaluation in the 
 | `multi_class_classification`    |     ✅     | [`eval-staging-822`](https://huggingface.co/datasets/autoevaluate/eval-staging-822) |
 | `multi_label_classification`    |     ❌     |                                                                                     |
 | `entity_extraction`             |     ✅     | [`eval-staging-838`](https://huggingface.co/datasets/autoevaluate/eval-staging-838) |
-| `extractive_question_answering` |     ❌     |                                                                                     |
+| `extractive_question_answering` |     ✅     |                                                                                     |
 | `translation`                   |     ❌     |                                                                                     |
 | `summarization`                 |     ❌     |                                                                                     |
