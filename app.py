@@ -103,6 +103,7 @@ st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 
 metadata = get_metadata(selected_dataset)
+print(metadata)
 if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
 
@@ -318,6 +319,7 @@ with st.form(key="form"):
     print("Selected models:", selected_models)
 
     submit_button = st.form_submit_button("Make submission")
+
     if submit_button:
         if len(selected_models) > 0:
             project_id = str(uuid.uuid4())[:3]
