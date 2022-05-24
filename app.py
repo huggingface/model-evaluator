@@ -41,12 +41,12 @@ TASK_TO_DEFAULT_METRICS = {
     "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum", "gen_len"],
 }
 
-supported_tasks = list(TASK_TO_ID.keys())
+SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
 @st.cache
 def get_supported_metrics():
     metrics = list_metrics()
-    supported_metrics = {}
+    supported_metrics = []
     for metric in tqdm(metrics):
         try:
             metric_func = load_metric(metric)
@@ -71,7 +71,7 @@ def get_supported_metrics():
                         break
 
             if defaults:
-                supported_metrics[metric] = argspec.kwonlydefaults
+                supported_metrics.append(metric)
     return supported_metrics
 
 supported_metrics = get_supported_metrics()
@@ -102,7 +102,6 @@ selected_dataset = st.selectbox("Select a dataset", all_datasets, index=all_data
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 
-# TODO: In general this will be a list of multiple configs => need to generalise logic here
 metadata = get_metadata(selected_dataset)
 if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
@@ -111,8 +110,8 @@ with st.expander("Advanced configuration"):
     ## Select task
     selected_task = st.selectbox(
         "Select a task",
-        supported_tasks,
-        index=supported_tasks.index(metadata[0]["task_id"]) if metadata is not None else 0,
+        SUPPORTED_TASKS,
+        index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
     )
     ### Select config
     configs = get_dataset_config_names(selected_dataset)
@@ -136,7 +135,7 @@ with st.expander("Advanced configuration"):
     ## Select columns
     rows_resp = http_get(
         path="/rows",
-        domain="https://datasets-preview.huggingface.tech",
+        domain=DATASETS_PREVIEW_API,
         params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
@@ -236,6 +235,9 @@ with st.expander("Advanced configuration"):
             col_mapping[target_col] = "target"
 
     elif selected_task == "extractive_question_answering":
+        col_mapping = metadata[0]["col_mapping"]
+        # Hub YAML parser converts periods to hyphens, so we remap them here
+        col_mapping = {k.replace("-", "."): v.replace("-", ".") for k, v in col_mapping.items()}
         with col1:
             st.markdown("`context` column")
             st.text("")
@@ -257,26 +259,22 @@ with st.expander("Advanced configuration"):
             context_col = st.selectbox(
                 "This column should contain the question's context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "context")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "context")) if metadata is not None else 0,
             )
             question_col = st.selectbox(
                 "This column should contain the question to be answered, given the context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "question")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "question")) if metadata is not None else 0,
             )
             answers_text_col = st.selectbox(
                 "This column should contain example answers to the question, extracted from the context",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.text"))
-                if metadata is not None
-                else 0,
+                index=col_names.index(get_key(col_mapping, "answers.text")) if metadata is not None else 0,
             )
             answers_start_col = st.selectbox(
                 "This column should contain the indices in the context of the first character of each answers.text",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "answers.answer_start"))
-                if metadata is not None
-                else 0,
+                index=col_names.index(get_key(col_mapping, "answers.answer_start")) if metadata is not None else 0,
             )
             col_mapping[context_col] = "context"
             col_mapping[question_col] = "question"
@@ -287,19 +285,19 @@ with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
     st.markdown("The following metrics will be computed")
-    html_string = " ".join(["<div style=\"padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left\"><div style=\"background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white\">" + metric + "</div></div>" for metric in TASK_TO_DEFAULT_METRICS[selected_task]])
+    html_string = " ".join([
+        "<div style=\"padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left\">"
+        + "<div style=\"background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white\">"
+        + metric + "</div></div>" for metric in TASK_TO_DEFAULT_METRICS[selected_task]
+    ])
     st.markdown(html_string, unsafe_allow_html=True)
     selected_metrics = st.multiselect(
         "(Optional) Select additional metrics",
-        list(set(supported_metrics.keys()) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
+        list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
-    for metric_name in selected_metrics:
-        argument_string = ", ".join(["-".join(key, value) for key, value in supported_metrics[metric].items()])
-        st.info(f"Note! The arguments for {metric_name} are: {argument_string}")
+    st.info("Note: user-selected metrics will be run with their default arguments from [here](https://github.com/huggingface/datasets/tree/master/metrics)")
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
-    print("Selected models:", selected_models)
     submit_button = st.form_submit_button("Make submission")
-
     if submit_button:
         project_id = str(uuid.uuid4())[:3]
         payload = {
@@ -355,7 +353,7 @@ with st.form(key="form"):
                         f"""
                     Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-                    * 📊 Click [here](https://huggingface.co/spaces/huggingface/leaderboards) to view the results from your submission
+                    * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the results from your submission
                     """
                     )
                 else:
