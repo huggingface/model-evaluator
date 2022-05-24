@@ -9,8 +9,7 @@ from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
 from evaluation import filter_evaluated_models
-from utils import (get_compatible_models, get_key, get_metadata, http_get,
-                   http_post)
+from utils import get_compatible_models, get_key, get_metadata, http_get, http_post
 
 if Path(".env").is_file():
     load_dotenv(".env")
