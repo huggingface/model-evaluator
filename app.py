@@ -304,7 +304,19 @@ with st.form(key="form"):
         list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
     st.info("Note: user-selected metrics will be run with their default arguments from [here](https://github.com/huggingface/datasets/tree/master/metrics)")
+
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
+    print("Selected models:", selected_models)
+
+    selected_models = filter_evaluated_models(
+        selected_models,
+        selected_task,
+        selected_dataset,
+        selected_config,
+        selected_split,
+    )
+    print("Selected models:", selected_models)
+
     submit_button = st.form_submit_button("Make submission")
     if submit_button:
         if len(selected_models) > 0:
