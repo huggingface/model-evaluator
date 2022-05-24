@@ -26,7 +26,7 @@ TASK_TO_ID = {
     # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
-    "translation": 6,
+    # "translation": 6, $ Not fully supported in AutoTrain evaluation
     "summarization": 8,
 }
 
@@ -40,7 +40,7 @@ st.title("Evaluation as a Service")
 st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
-    you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
+    you to evaluate 🤗 Transformers models with a dataset on the Hub. Please
     select the dataset and configuration below. The results of your evaluation
     will be displayed on the public leaderboard
     [here](https://huggingface.co/spaces/autoevaluate/leaderboards).
@@ -324,11 +324,11 @@ with st.form(key="form"):
                     if train_json_resp["success"]:
                         st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
                         st.markdown(
-                            """
+                            f"""
                         Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-                        * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the \
-                            results from your submission
+                        📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
+                            to view the results from your submission
                         """
                         )
                     else:
