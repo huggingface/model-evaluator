@@ -4,9 +4,11 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from datasets import get_dataset_config_names
+from datasets import get_dataset_config_names, list_metrics, load_metric
 from dotenv import load_dotenv
 from huggingface_hub import list_datasets
+from tqdm import tqdm
+import inspect
 
 from utils import (get_compatible_models, get_key, get_metadata, http_get,
                    http_post)
@@ -30,7 +32,49 @@ TASK_TO_ID = {
     "summarization": 8,
 }
 
+TASK_TO_DEFAULT_METRICS = {
+    "binary_classification": ["f1", "precision", "recall", "auc", "accuracy"],
+    "multi_class_classification": ["f1_micro", "f1_macro", "f1_weighted", "precision_macro", "precision_micro", "precision_weighted", "recall_macro", "recall_micro", "recall_weighted", "accuracy"],
+    "entity_extraction": ["precision", "recall", "f1", "accuracy"],
+    "extractive_question_answering": [],
+    "translation": ["sacrebleu", "gen_len"],
+    "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum", "gen_len"],
+}
+
 supported_tasks = list(TASK_TO_ID.keys())
+
+@st.cache
+def get_supported_metrics():
+    metrics = list_metrics()
+    supported_metrics = {}
+    for metric in tqdm(metrics):
+        try:
+            metric_func = load_metric(metric)
+        except Exception as e:
+            print(e)
+            print("Skipping the following metric, which cannot load:", metric)
+
+        argspec = inspect.getfullargspec(metric_func.compute)
+        if (
+            "references" in argspec.kwonlyargs
+            and "predictions" in argspec.kwonlyargs
+        ):
+            # We require that "references" and "predictions" are arguments
+            # to the metric function. We also require that the other arguments
+            # besides "references" and "predictions" have defaults and so do not
+            # need to be specified explicitly.
+            defaults = True
+            for key, value in argspec.kwonlydefaults.items():
+                if key not in ("references", "predictions"):
+                    if value is None:
+                        defaults = False
+                        break
+
+            if defaults:
+                supported_metrics[metric] = argspec.kwonlydefaults
+    return supported_metrics
+
+supported_metrics = get_supported_metrics()
 
 
 ###########
@@ -242,7 +286,16 @@ with st.expander("Advanced configuration"):
 with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
-
+    st.markdown("The following metrics will be computed")
+    html_string = " ".join(["<div style=\"padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left\"><div style=\"background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white\">" + metric + "</div></div>" for metric in TASK_TO_DEFAULT_METRICS[selected_task]])
+    st.markdown(html_string, unsafe_allow_html=True)
+    selected_metrics = st.multiselect(
+        "(Optional) Select additional metrics",
+        list(set(supported_metrics.keys()) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
+    )
+    for metric_name in selected_metrics:
+        argument_string = ", ".join(["-".join(key, value) for key, value in supported_metrics[metric].items()])
+        st.info(f"Note! The arguments for {metric_name} are: {argument_string}")
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
     submit_button = st.form_submit_button("Make submission")
@@ -264,7 +317,7 @@ with st.form(key="form"):
                     "disk_size_gb": 150,
                 },
                 "evaluation": {
-                    "metrics": [],
+                    "metrics": selected_metrics,
                     "models": selected_models,
                 },
             },
