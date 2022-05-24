@@ -8,8 +8,8 @@ from datasets import get_dataset_config_names
 from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
-from utils import (get_compatible_models, get_key, get_metadata, http_get,
-                   http_post)
+from evaluation import filter_evaluated_models
+from utils import get_compatible_models, get_key, get_metadata, http_get, http_post
 
 if Path(".env").is_file():
     load_dotenv(".env")
@@ -33,9 +33,9 @@ TASK_TO_ID = {
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
 
-###########
-### APP ###
-###########
+#######
+# APP #
+#######
 st.title("Evaluation as a Service")
 st.markdown(
     """
@@ -64,18 +64,22 @@ if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
 
 with st.expander("Advanced configuration"):
-    ## Select task
+    # Select task
     selected_task = st.selectbox(
         "Select a task",
         SUPPORTED_TASKS,
         index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
     )
-    ### Select config
+    # Select config
     configs = get_dataset_config_names(selected_dataset)
     selected_config = st.selectbox("Select a config", configs)
 
-    ## Select splits
-    splits_resp = http_get(path="/splits", domain=DATASETS_PREVIEW_API, params={"dataset": selected_dataset})
+    # Select splits
+    splits_resp = http_get(
+        path="/splits",
+        domain=DATASETS_PREVIEW_API,
+        params={"dataset": selected_dataset},
+    )
     if splits_resp.status_code == 200:
         split_names = []
         all_splits = splits_resp.json()
@@ -89,11 +93,15 @@ with st.expander("Advanced configuration"):
             index=split_names.index(metadata[0]["splits"]["eval_split"]) if metadata is not None else 0,
         )
 
-    ## Select columns
+    # Select columns
     rows_resp = http_get(
         path="/rows",
         domain=DATASETS_PREVIEW_API,
-        params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
+        params={
+            "dataset": selected_dataset,
+            "config": selected_config,
+            "split": selected_split,
+        },
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
 
@@ -135,7 +143,7 @@ with st.expander("Advanced configuration"):
             st.markdown("`tags` column")
         with col2:
             tokens_col = st.selectbox(
-                "This column should contain the parts of the text (as an array of tokens) you want to assign labels to",
+                "This column should contain the array of tokens",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "tokens")) if metadata is not None else 0,
             )
@@ -244,65 +252,86 @@ with st.form(key="form"):
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
+
+    selected_models = filter_evaluated_models(
+        selected_models,
+        selected_task,
+        selected_dataset,
+        selected_config,
+        selected_split,
+    )
+    print("Selected models:", selected_models)
+
     submit_button = st.form_submit_button("Make submission")
 
     if submit_button:
-        project_id = str(uuid.uuid4())[:3]
-        payload = {
-            "username": AUTOTRAIN_USERNAME,
-            "proj_name": f"my-eval-project-{project_id}",
-            "task": TASK_TO_ID[selected_task],
-            "config": {
-                "language": "en",
-                "max_models": 5,
-                "instance": {
-                    "provider": "aws",
-                    "instance_type": "ml.g4dn.4xlarge",
-                    "max_runtime_seconds": 172800,
-                    "num_instances": 1,
-                    "disk_size_gb": 150,
-                },
-                "evaluation": {
-                    "metrics": [],
-                    "models": selected_models,
-                },
-            },
-        }
-        print(f"Payload: {payload}")
-        project_json_resp = http_post(
-            path="/projects/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
-        ).json()
-        print(project_json_resp)
-
-        if project_json_resp["created"]:
+        if len(selected_models) > 0:
+            project_id = str(uuid.uuid4())[:3]
             payload = {
-                "split": 4,  # use "auto" split choice in AutoTrain
-                "col_mapping": col_mapping,
-                "load_config": {"max_size_bytes": 0, "shuffle": False},
+                "username": AUTOTRAIN_USERNAME,
+                "proj_name": f"my-eval-project-{project_id}",
+                "task": TASK_TO_ID[selected_task],
+                "config": {
+                    "language": "en",
+                    "max_models": 5,
+                    "instance": {
+                        "provider": "aws",
+                        "instance_type": "ml.g4dn.4xlarge",
+                        "max_runtime_seconds": 172800,
+                        "num_instances": 1,
+                        "disk_size_gb": 150,
+                    },
+                    "evaluation": {
+                        "metrics": [],
+                        "models": selected_models,
+                    },
+                },
             }
-            data_json_resp = http_post(
-                path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
+            print(f"Payload: {payload}")
+            project_json_resp = http_post(
+                path="/projects/create",
                 payload=payload,
                 token=HF_TOKEN,
                 domain=AUTOTRAIN_BACKEND_API,
-                params={"type": "dataset", "config_name": selected_config, "split_name": selected_split},
             ).json()
-            print(data_json_resp)
-            if data_json_resp["download_status"] == 1:
-                train_json_resp = http_get(
-                    path=f"/projects/{project_json_resp['id']}/data/start_process",
+            print(project_json_resp)
+
+            if project_json_resp["created"]:
+                payload = {
+                    "split": 4,  # use "auto" split choice in AutoTrain
+                    "col_mapping": col_mapping,
+                    "load_config": {"max_size_bytes": 0, "shuffle": False},
+                }
+                data_json_resp = http_post(
+                    path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
+                    payload=payload,
                     token=HF_TOKEN,
                     domain=AUTOTRAIN_BACKEND_API,
+                    params={
+                        "type": "dataset",
+                        "config_name": selected_config,
+                        "split_name": selected_split,
+                    },
                 ).json()
-                print(train_json_resp)
-                if train_json_resp["success"]:
-                    st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
-                    st.markdown(
-                        f"""
-                    Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
+                print(data_json_resp)
+                if data_json_resp["download_status"] == 1:
+                    train_json_resp = http_get(
+                        path=f"/projects/{project_json_resp['id']}/data/start_process",
+                        token=HF_TOKEN,
+                        domain=AUTOTRAIN_BACKEND_API,
+                    ).json()
+                    print(train_json_resp)
+                    if train_json_resp["success"]:
+                        st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
+                        st.markdown(
+                            """
+                        Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-                    * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the results from your submission
-                    """
-                    )
-                else:
-                    st.error("🙈 Oh noes, there was an error submitting your submission!")
+                        * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the \
+                            results from your submission
+                        """
+                        )
+                    else:
+                        st.error("🙈 Oh noes, there was an error submitting your evaluation job!")
+        else:
+            st.warning("⚠️ No models were selected for evaluation!")
