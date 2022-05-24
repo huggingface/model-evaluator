@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import streamlit as st
 from huggingface_hub import DatasetFilter, HfApi
 from huggingface_hub.hf_api import DatasetInfo
 
@@ -24,3 +25,22 @@ def get_evaluation_ids():
     filt = DatasetFilter(author="autoevaluate")
     evaluation_datasets = HfApi().list_datasets(filter=filt, full=True)
     return [compute_evaluation_id(dset) for dset in evaluation_datasets]
+
+
+def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_split):
+    evaluation_ids = get_evaluation_ids()
+
+    for idx, model in enumerate(models):
+        evaluation_info = EvaluationInfo(
+            task=task,
+            model=model,
+            dataset_name=dataset_name,
+            dataset_config=dataset_config,
+            dataset_split=dataset_split,
+        )
+        candidate_id = hash(evaluation_info)
+        if candidate_id in evaluation_ids:
+            st.info(f"Model {model} has already been evaluated on this configuration. Skipping evaluation...")
+            models.pop(idx)
+
+    return models
