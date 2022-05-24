@@ -1,7 +1,7 @@
 from typing import Dict, Union
 
 import requests
-from huggingface_hub import DatasetFilter, HfApi, ModelFilter
+from huggingface_hub import HfApi, ModelFilter
 
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",

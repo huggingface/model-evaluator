@@ -8,6 +8,8 @@ from datasets import get_dataset_config_names
 from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
+from evaluation import (EvaluationInfo, compute_evaluation_id,
+                        get_evaluation_ids)
 from utils import (get_compatible_models, get_key, get_metadata, http_get,
                    http_post)
 
@@ -244,6 +246,24 @@ with st.form(key="form"):
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
+
+    evaluation_ids = get_evaluation_ids()
+
+    for idx, model in enumerate(selected_models):
+        eval_info = EvaluationInfo(
+            task=selected_task,
+            model=model,
+            dataset_name=selected_dataset,
+            dataset_config=selected_config,
+            dataset_split=selected_split,
+        )
+        candidate_id = hash(eval_info)
+        if candidate_id in evaluation_ids:
+            st.info(f"Model {model} has already been evaluated on this configuration. Skipping ...")
+            selected_models.pop(idx)
+
+    print("Selected models:", selected_models)
+
     submit_button = st.form_submit_button("Make submission")
 
     if submit_button:
