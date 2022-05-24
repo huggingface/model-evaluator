@@ -10,8 +10,8 @@ from huggingface_hub import list_datasets
 from tqdm import tqdm
 import inspect
 
-from utils import (get_compatible_models, get_key, get_metadata, http_get,
-                   http_post)
+from evaluation import filter_evaluated_models
+from utils import get_compatible_models, get_key, get_metadata, http_get, http_post
 
 if Path(".env").is_file():
     load_dotenv(".env")
@@ -28,7 +28,7 @@ TASK_TO_ID = {
     # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
-    "translation": 6,
+    # "translation": 6, $ Not fully supported in AutoTrain evaluation
     "summarization": 8,
 }
 
@@ -77,14 +77,14 @@ def get_supported_metrics():
 supported_metrics = get_supported_metrics()
 
 
-###########
-### APP ###
-###########
+#######
+# APP #
+#######
 st.title("Evaluation as a Service")
 st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
-    you to evaluate any 🤗 Transformers model with a dataset on the Hub. Please
+    you to evaluate 🤗 Transformers models with a dataset on the Hub. Please
     select the dataset and configuration below. The results of your evaluation
     will be displayed on the public leaderboard
     [here](https://huggingface.co/spaces/autoevaluate/leaderboards).
@@ -107,18 +107,22 @@ if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
 
 with st.expander("Advanced configuration"):
-    ## Select task
+    # Select task
     selected_task = st.selectbox(
         "Select a task",
         SUPPORTED_TASKS,
         index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
     )
-    ### Select config
+    # Select config
     configs = get_dataset_config_names(selected_dataset)
     selected_config = st.selectbox("Select a config", configs)
 
-    ## Select splits
-    splits_resp = http_get(path="/splits", domain=DATASETS_PREVIEW_API, params={"dataset": selected_dataset})
+    # Select splits
+    splits_resp = http_get(
+        path="/splits",
+        domain=DATASETS_PREVIEW_API,
+        params={"dataset": selected_dataset},
+    )
     if splits_resp.status_code == 200:
         split_names = []
         all_splits = splits_resp.json()
@@ -132,11 +136,15 @@ with st.expander("Advanced configuration"):
             index=split_names.index(metadata[0]["splits"]["eval_split"]) if metadata is not None else 0,
         )
 
-    ## Select columns
+    # Select columns
     rows_resp = http_get(
         path="/rows",
         domain=DATASETS_PREVIEW_API,
-        params={"dataset": selected_dataset, "config": selected_config, "split": selected_split},
+        params={
+            "dataset": selected_dataset,
+            "config": selected_config,
+            "split": selected_split,
+        },
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
 
@@ -178,7 +186,7 @@ with st.expander("Advanced configuration"):
             st.markdown("`tags` column")
         with col2:
             tokens_col = st.selectbox(
-                "This column should contain the parts of the text (as an array of tokens) you want to assign labels to",
+                "This column should contain the array of tokens",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "tokens")) if metadata is not None else 0,
             )
@@ -322,7 +330,10 @@ with st.form(key="form"):
         }
         print(f"Payload: {payload}")
         project_json_resp = http_post(
-            path="/projects/create", payload=payload, token=HF_TOKEN, domain=AUTOTRAIN_BACKEND_API
+            path="/projects/create",
+            payload=payload,
+            token=HF_TOKEN,
+            domain=AUTOTRAIN_BACKEND_API,
         ).json()
         print(project_json_resp)
 
@@ -337,7 +348,11 @@ with st.form(key="form"):
                 payload=payload,
                 token=HF_TOKEN,
                 domain=AUTOTRAIN_BACKEND_API,
-                params={"type": "dataset", "config_name": selected_config, "split_name": selected_split},
+                params={
+                    "type": "dataset",
+                    "config_name": selected_config,
+                    "split_name": selected_split,
+                },
             ).json()
             print(data_json_resp)
             if data_json_resp["download_status"] == 1:
@@ -353,8 +368,11 @@ with st.form(key="form"):
                         f"""
                     Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
-                    * 📊 Click [here](https://huggingface.co/spaces/autoevaluate/leaderboards) to view the results from your submission
+                    📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
+                        to view the results from your submission
                     """
                     )
                 else:
-                    st.error("🙈 Oh noes, there was an error submitting your submission!")
+                    st.error("🙈 Oh noes, there was an error submitting your evaluation job!")
+    else:
+        st.warning("⚠️ No models were selected for evaluation!")
