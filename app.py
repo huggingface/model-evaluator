@@ -307,7 +307,8 @@ with st.form(key="form"):
     html_string = " ".join(
         [
             '<div style="padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left">'
-            + '<div style="background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white">'
+            + '<div style="background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;'
+            + 'padding-left:5px;color:white">'
             + metric
             + "</div></div>"
             for metric in TASK_TO_DEFAULT_METRICS[selected_task]
@@ -319,7 +320,8 @@ with st.form(key="form"):
         list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
     st.info(
-        "Note: user-selected metrics will be run with their default arguments from [here](https://github.com/huggingface/datasets/tree/master/metrics)"
+        "Note: user-selected metrics will be run with their default arguments from "
+        + "[here](https://github.com/huggingface/datasets/tree/master/metrics)"
     )
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
