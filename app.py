@@ -34,7 +34,18 @@ TASK_TO_ID = {
 
 TASK_TO_DEFAULT_METRICS = {
     "binary_classification": ["f1", "precision", "recall", "auc", "accuracy"],
-    "multi_class_classification": ["f1_micro", "f1_macro", "f1_weighted", "precision_macro", "precision_micro", "precision_weighted", "recall_macro", "recall_micro", "recall_weighted", "accuracy"],
+    "multi_class_classification": [
+        "f1_micro",
+        "f1_macro",
+        "f1_weighted",
+        "precision_macro",
+        "precision_micro",
+        "precision_weighted",
+        "recall_macro",
+        "recall_micro",
+        "recall_weighted",
+        "accuracy",
+    ],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
     "extractive_question_answering": [],
     "translation": ["sacrebleu", "gen_len"],
@@ -42,6 +53,7 @@ TASK_TO_DEFAULT_METRICS = {
 }
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
+
 
 @st.cache
 def get_supported_metrics():
@@ -55,10 +67,7 @@ def get_supported_metrics():
             print("Skipping the following metric, which cannot load:", metric)
 
         argspec = inspect.getfullargspec(metric_func.compute)
-        if (
-            "references" in argspec.kwonlyargs
-            and "predictions" in argspec.kwonlyargs
-        ):
+        if "references" in argspec.kwonlyargs and "predictions" in argspec.kwonlyargs:
             # We require that "references" and "predictions" are arguments
             # to the metric function. We also require that the other arguments
             # besides "references" and "predictions" have defaults and so do not
@@ -73,6 +82,7 @@ def get_supported_metrics():
             if defaults:
                 supported_metrics.append(metric)
     return supported_metrics
+
 
 supported_metrics = get_supported_metrics()
 
@@ -294,17 +304,23 @@ with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
     st.markdown("The following metrics will be computed")
-    html_string = " ".join([
-        "<div style=\"padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left\">"
-        + "<div style=\"background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white\">"
-        + metric + "</div></div>" for metric in TASK_TO_DEFAULT_METRICS[selected_task]
-    ])
+    html_string = " ".join(
+        [
+            '<div style="padding-right:5px;padding-left:5px;padding-top:5px;padding-bottom:5px;float:left">'
+            + '<div style="background-color:#D3D3D3;border-radius:5px;display:inline-block;padding-right:5px;padding-left:5px;color:white">'
+            + metric
+            + "</div></div>"
+            for metric in TASK_TO_DEFAULT_METRICS[selected_task]
+        ]
+    )
     st.markdown(html_string, unsafe_allow_html=True)
     selected_metrics = st.multiselect(
         "(Optional) Select additional metrics",
         list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
-    st.info("Note: user-selected metrics will be run with their default arguments from [here](https://github.com/huggingface/datasets/tree/master/metrics)")
+    st.info(
+        "Note: user-selected metrics will be run with their default arguments from [here](https://github.com/huggingface/datasets/tree/master/metrics)"
+    )
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
