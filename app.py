@@ -33,7 +33,7 @@ TASK_TO_ID = {
     # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
-    # "translation": 6, # Not fully supported in AutoTrain evaluation
+    "translation": 6,
     "summarization": 8,
 }
 
@@ -276,10 +276,12 @@ with st.form(key="form"):
             project_id = str(uuid.uuid4())[:3]
             payload = {
                 "username": AUTOTRAIN_USERNAME,
-                "proj_name": f"my-eval-project-{project_id}",
+                "proj_name": f"eval-project-{project_id}",
                 "task": TASK_TO_ID[selected_task],
                 "config": {
-                    "language": "en",
+                    "language": "en"
+                    if selected_task != "translation"
+                    else "en2de",  # Need this dummy pair to enable translation
                     "max_models": 5,
                     "instance": {
                         "provider": "aws",
