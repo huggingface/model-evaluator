@@ -15,10 +15,13 @@ class EvaluationInfo:
 
 
 def compute_evaluation_id(dataset_info: DatasetInfo) -> int:
-    metadata = dataset_info.cardData["eval_info"]
-    metadata.pop("col_mapping", None)
-    evaluation_info = EvaluationInfo(**metadata)
-    return hash(evaluation_info)
+    if dataset_info.cardData is not None:
+        metadata = dataset_info.cardData["eval_info"]
+        metadata.pop("col_mapping", None)
+        evaluation_info = EvaluationInfo(**metadata)
+        return hash(evaluation_info)
+    else:
+        return None
 
 
 def get_evaluation_ids():
