@@ -260,14 +260,15 @@ with st.form(key="form"):
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
 
-    selected_models = filter_evaluated_models(
-        selected_models,
-        selected_task,
-        selected_dataset,
-        selected_config,
-        selected_split,
-    )
-    print("Selected models:", selected_models)
+    if len(selected_models) > 0:
+        selected_models = filter_evaluated_models(
+            selected_models,
+            selected_task,
+            selected_dataset,
+            selected_config,
+            selected_split,
+        )
+        print("Selected models:", selected_models)
 
     submit_button = st.form_submit_button("Make submission")
 
