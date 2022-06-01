@@ -42,15 +42,9 @@ TASK_TO_ID = {
 TASK_TO_DEFAULT_METRICS = {
     "binary_classification": ["f1", "precision", "recall", "auc", "accuracy"],
     "multi_class_classification": [
-        "f1_micro",
-        "f1_macro",
-        "f1_weighted",
-        "precision_macro",
-        "precision_micro",
-        "precision_weighted",
-        "recall_macro",
-        "recall_micro",
-        "recall_weighted",
+        "f1",
+        "precision",
+        "recall",
         "accuracy",
     ],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
@@ -307,9 +301,7 @@ with st.expander("Advanced configuration"):
             col_mapping[answers_text_col] = "answers.text"
             col_mapping[answers_start_col] = "answers.answer_start"
 
-with st.form(key="form"):
-
-    compatible_models = get_compatible_models(selected_task, selected_dataset)
+    st.markdown("**Select metrics**")
     st.markdown("The following metrics will be computed")
     html_string = " ".join(
         [
@@ -328,8 +320,12 @@ with st.form(key="form"):
     )
     st.info(
         "Note: user-selected metrics will be run with their default arguments from "
-        + "[here](https://github.com/huggingface/datasets/tree/master/metrics)"
+        + "[here](https://github.com/huggingface/evaluate/tree/main/metrics)"
     )
+
+with st.form(key="form"):
+
+    compatible_models = get_compatible_models(selected_task, selected_dataset)
 
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
@@ -348,7 +344,7 @@ with st.form(key="form"):
 
     if submit_button:
         if len(selected_models) > 0:
-            project_id = str(uuid.uuid4())[:3]
+            project_id = str(uuid.uuid4())
             payload = {
                 "username": AUTOTRAIN_USERNAME,
                 "proj_name": f"eval-project-{project_id}",
