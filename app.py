@@ -66,6 +66,7 @@ def get_supported_metrics():
         except Exception as e:
             print(e)
             print("Skipping the following metric, which cannot load:", metric)
+            continue
 
         argspec = inspect.getfullargspec(metric_func.compute)
         if "references" in argspec.kwonlyargs and "predictions" in argspec.kwonlyargs:
