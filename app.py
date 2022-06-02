@@ -96,8 +96,8 @@ st.title("Evaluation as a Service")
 st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
-    you to evaluate [Transformers
-    models](https://huggingface.co/models?library=transformers&sort=downloads)
+    you to evaluate 🤗 Transformers
+    [models](https://huggingface.co/models?library=transformers&sort=downloads)
     with a dataset on the Hub. Please select the dataset and configuration
     below. The results of your evaluation will be displayed on the [public
     leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
