@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-from datasets import get_dataset_config_names, list_metrics, load_metric
+from datasets import get_dataset_config_names
 from dotenv import load_dotenv
-from huggingface_hub import list_datasets
+from evaluate import load
+from huggingface_hub import list_datasets, list_metrics
 from tqdm import tqdm
 
 from evaluation import filter_evaluated_models
@@ -62,7 +63,7 @@ def get_supported_metrics():
     supported_metrics = []
     for metric in tqdm(metrics):
         try:
-            metric_func = load_metric(metric)
+            metric_func = load(metric)
         except Exception as e:
             print(e)
             print("Skipping the following metric, which cannot load:", metric)
@@ -144,10 +145,14 @@ with st.expander("Advanced configuration"):
             if split["config"] == selected_config:
                 split_names.append(split["split"])
 
+        if metadata is not None:
+            eval_split = metadata[0]["splits"].get("eval_split", None)
+        else:
+            eval_split = None
         selected_split = st.selectbox(
             "Select a split",
             split_names,
-            index=split_names.index(metadata[0]["splits"]["eval_split"]) if metadata is not None else 0,
+            index=split_names.index(eval_split) if eval_split is not None else 0,
         )
 
     # Select columns
@@ -322,8 +327,8 @@ with st.expander("Advanced configuration"):
         list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
     st.info(
-        "Note: user-selected metrics will be run with their default arguments from "
-        + "[here](https://github.com/huggingface/evaluate/tree/main/metrics)"
+        """"Note: user-selected metrics will be run with their default arguments. \
+            Check out the [available metrics](https://huggingface.co/metrics) for more details."""
     )
 
 with st.form(key="form"):

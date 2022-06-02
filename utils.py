@@ -40,7 +40,7 @@ def http_post(path: str, token: str, payload=None, domain: str = None, params=No
 
 
 def http_get(path: str, domain: str, token: str = None, params: dict = None) -> requests.Response:
-    """HTTP POST request to the AutoNLP API, raises UnreachableAPIError if the API cannot be reached"""
+    """HTTP POST request to `path`, raises UnreachableAPIError if the API cannot be reached"""
     try:
         response = requests.get(
             url=domain + path,
@@ -49,7 +49,7 @@ def http_get(path: str, domain: str, token: str = None, params: dict = None) -> 
             params=params,
         )
     except requests.exceptions.ConnectionError:
-        print("❌ Failed to reach AutoNLP API, check your internet connection")
+        print(f"❌ Failed to reach {path}, check your internet connection")
     response.raise_for_status()
     return response
 
