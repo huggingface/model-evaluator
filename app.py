@@ -49,8 +49,8 @@ TASK_TO_DEFAULT_METRICS = {
     ],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
     "extractive_question_answering": [],
-    "translation": ["sacrebleu", "gen_len"],
-    "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum", "gen_len"],
+    "translation": ["sacrebleu"],
+    "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum"],
 }
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
@@ -96,10 +96,11 @@ st.title("Evaluation as a Service")
 st.markdown(
     """
     Welcome to Hugging Face's Evaluation as a Service! This application allows
-    you to evaluate 🤗 Transformers models with a dataset on the Hub. Please
-    select the dataset and configuration below. The results of your evaluation
-    will be displayed on the public leaderboard
-    [here](https://huggingface.co/spaces/autoevaluate/leaderboards).
+    you to evaluate 🤗 Transformers
+    [models](https://huggingface.co/models?library=transformers&sort=downloads)
+    with a dataset on the Hub. Please select the dataset and configuration
+    below. The results of your evaluation will be displayed on the [public
+    leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
 
@@ -302,6 +303,7 @@ with st.expander("Advanced configuration"):
             col_mapping[answers_text_col] = "answers.text"
             col_mapping[answers_start_col] = "answers.answer_start"
 
+    # Select metrics
     st.markdown("**Select metrics**")
     st.markdown("The following metrics will be computed")
     html_string = " ".join(
@@ -327,7 +329,6 @@ with st.expander("Advanced configuration"):
 with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
-
     selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
     print("Selected models:", selected_models)
 
@@ -345,7 +346,7 @@ with st.form(key="form"):
 
     if submit_button:
         if len(selected_models) > 0:
-            project_id = str(uuid.uuid4())
+            project_id = str(uuid.uuid4())[:8]
             payload = {
                 "username": AUTOTRAIN_USERNAME,
                 "proj_name": f"eval-project-{project_id}",
