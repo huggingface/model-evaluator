@@ -3,3 +3,4 @@ python-dotenv
 streamlit==1.2.0
 datasets
 py7zr
+sklearn
