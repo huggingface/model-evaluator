@@ -120,7 +120,9 @@ selected_dataset = st.selectbox(
     "Select a dataset",
     all_datasets,
     index=all_datasets.index(default_dataset),
-    help="Datasets with metadata can be evaluated with 1-click. Check out the [documentation](https://huggingface.co/docs/hub/datasets-cards) to add evaluation metadata to a dataset.",
+    help="""Datasets with metadata can be evaluated with 1-click. Check out the \
+        [documentation](https://huggingface.co/docs/hub/datasets-cards) to add \
+        evaluation metadata to a dataset.""",
 )
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
@@ -347,7 +349,8 @@ with st.form(key="form"):
     selected_models = st.multiselect(
         "Select the models you wish to evaluate",
         compatible_models,
-        help="Don't see your model in this list? Add the dataset and task it was trained to the [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)",
+        help="""Don't see your model in this list? Add the dataset and task it was trained to the \
+            [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)""",
     )
     print("Selected models:", selected_models)
 
