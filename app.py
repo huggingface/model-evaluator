@@ -59,9 +59,12 @@ SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
 @st.cache
 def get_supported_metrics():
-    metrics = list_metrics()
+    metrics = [metric.id for metric in list_metrics()]
     supported_metrics = []
     for metric in tqdm(metrics):
+        # TODO: this currently requires all metric dependencies to be installed
+        # in the same environment. Refactor to avoid needing to actually load
+        # the metric.
         try:
             metric_func = load(metric)
         except Exception as e:
@@ -93,14 +96,15 @@ supported_metrics = get_supported_metrics()
 #######
 # APP #
 #######
-st.title("Evaluation as a Service")
+st.title("Evaluation on the Hub")
 st.markdown(
     """
-    Welcome to Hugging Face's Evaluation as a Service! This application allows
+    Welcome to Hugging Face's automatic model evaluator! This application allows
     you to evaluate 🤗 Transformers
     [models](https://huggingface.co/models?library=transformers&sort=downloads)
-    with a dataset on the Hub. Please select the dataset and configuration
-    below. The results of your evaluation will be displayed on the [public
+    across a wide variety of datasets on the Hub -- all for free! Please select
+    the dataset and configuration below. The results of your evaluation will be
+    displayed on the [public
     leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
@@ -112,7 +116,12 @@ if "dataset" in query_params:
     if len(query_params["dataset"]) > 0 and query_params["dataset"][0] in all_datasets:
         default_dataset = query_params["dataset"][0]
 
-selected_dataset = st.selectbox("Select a dataset", all_datasets, index=all_datasets.index(default_dataset))
+selected_dataset = st.selectbox(
+    "Select a dataset",
+    all_datasets,
+    index=all_datasets.index(default_dataset),
+    help="Datasets with metadata can be evaluated with 1-click. Check out the [documentation](https://huggingface.co/docs/hub/datasets-cards) to add evaluation metadata to a dataset.",
+)
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 
@@ -262,9 +271,10 @@ with st.expander("Advanced configuration"):
             col_mapping[target_col] = "target"
 
     elif selected_task == "extractive_question_answering":
-        col_mapping = metadata[0]["col_mapping"]
-        # Hub YAML parser converts periods to hyphens, so we remap them here
-        col_mapping = format_col_mapping(col_mapping)
+        if metadata is not None:
+            col_mapping = metadata[0]["col_mapping"]
+            # Hub YAML parser converts periods to hyphens, so we remap them here
+            col_mapping = format_col_mapping(col_mapping)
         with col1:
             st.markdown("`context` column")
             st.text("")
@@ -327,14 +337,18 @@ with st.expander("Advanced configuration"):
         list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
     )
     st.info(
-        """"Note: user-selected metrics will be run with their default arguments. \
+        """Note: user-selected metrics will be run with their default arguments. \
             Check out the [available metrics](https://huggingface.co/metrics) for more details."""
     )
 
 with st.form(key="form"):
 
     compatible_models = get_compatible_models(selected_task, selected_dataset)
-    selected_models = st.multiselect("Select the models you wish to evaluate", compatible_models)
+    selected_models = st.multiselect(
+        "Select the models you wish to evaluate",
+        compatible_models,
+        help="Don't see your model in this list? Add the dataset and task it was trained to the [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)",
+    )
     print("Selected models:", selected_models)
 
     if len(selected_models) > 0:
@@ -347,7 +361,7 @@ with st.form(key="form"):
         )
         print("Selected models:", selected_models)
 
-    submit_button = st.form_submit_button("Make submission")
+    submit_button = st.form_submit_button("Evaluate models")
 
     if submit_button:
         if len(selected_models) > 0:

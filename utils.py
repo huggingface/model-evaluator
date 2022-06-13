@@ -1,7 +1,7 @@
 from typing import Dict, Union
 
 import requests
-from huggingface_hub import HfApi, ModelFilter
+from huggingface_hub import HfApi, ModelFilter, dataset_info
 
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
@@ -55,9 +55,9 @@ def http_get(path: str, domain: str, token: str = None, params: dict = None) -> 
 
 
 def get_metadata(dataset_name: str) -> Union[Dict, None]:
-    data = requests.get(f"https://huggingface.co/api/datasets/{dataset_name}").json()
-    if data["cardData"] is not None and "train-eval-index" in data["cardData"].keys():
-        return data["cardData"]["train-eval-index"]
+    data = dataset_info(dataset_name)
+    if data.cardData is not None and "train-eval-index" in data.cardData.keys():
+        return data.cardData["train-eval-index"]
     else:
         return None
 
