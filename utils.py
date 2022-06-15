@@ -1,7 +1,8 @@
 from typing import Dict, Union
 
+import jsonlines
 import requests
-from huggingface_hub import HfApi, ModelFilter, dataset_info
+from huggingface_hub import HfApi, ModelFilter, Repository, dataset_info
 
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
@@ -15,6 +16,8 @@ AUTOTRAIN_TASK_TO_HUB_TASK = {
 }
 
 HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items()}
+LOGS_REPO = "evaluation-job-logs"
+
 
 api = HfApi()
 
@@ -86,3 +89,28 @@ def format_col_mapping(col_mapping: dict) -> dict:
         col_mapping[f"answers.{k}"] = f"answers.{v}"
     del col_mapping["answers"]
     return col_mapping
+
+
+def commit_evaluation_log(evaluation_log, hf_access_token=None):
+    logs_repo_url = f"https://huggingface.co/datasets/autoevaluate/{LOGS_REPO}"
+    logs_repo = Repository(
+        local_dir=LOGS_REPO,
+        clone_from=logs_repo_url,
+        repo_type="dataset",
+        private=True,
+        use_auth_token=hf_access_token,
+    )
+    logs_repo.git_pull()
+    with jsonlines.open(f"{LOGS_REPO}/logs.jsonl") as r:
+        lines = []
+        for obj in r:
+            lines.append(obj)
+
+    lines.append(evaluation_log)
+    with jsonlines.open(f"{LOGS_REPO}/logs.jsonl", mode="w") as writer:
+        for job in lines:
+            writer.write(job)
+    logs_repo.push_to_hub(
+        commit_message=f"Evaluation submitted with project name {evaluation_log['payload']['proj_name']}"
+    )
+    print("INFO -- Pushed evaluation logs to the Hub")

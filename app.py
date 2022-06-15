@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from evaluation import filter_evaluated_models
 from utils import (
+    commit_evaluation_log,
     format_col_mapping,
     get_compatible_models,
     get_key,
@@ -69,7 +70,7 @@ def get_supported_metrics():
             metric_func = load(metric)
         except Exception as e:
             print(e)
-            print("Skipping the following metric, which cannot load:", metric)
+            print("WARNING -- Skipping the following metric, which cannot load:", metric)
             continue
 
         argspec = inspect.getfullargspec(metric_func.compute)
@@ -128,7 +129,7 @@ st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
 
 metadata = get_metadata(selected_dataset)
-print(metadata)
+print(f"INFO -- Dataset metadata: {metadata}")
 if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
 
@@ -352,7 +353,7 @@ with st.form(key="form"):
         help="""Don't see your model in this list? Add the dataset and task it was trained to the \
             [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)""",
     )
-    print("Selected models:", selected_models)
+    print("INFO -- Selected models before filter:", selected_models)
 
     if len(selected_models) > 0:
         selected_models = filter_evaluated_models(
@@ -362,14 +363,14 @@ with st.form(key="form"):
             selected_config,
             selected_split,
         )
-        print("Selected models:", selected_models)
+        print("INFO -- Selected models after filter:", selected_models)
 
-    submit_button = st.form_submit_button("Evaluate models")
+    submit_button = st.form_submit_button("Evaluate models 🚀")
 
     if submit_button:
         if len(selected_models) > 0:
             project_id = str(uuid.uuid4())[:8]
-            payload = {
+            project_payload = {
                 "username": AUTOTRAIN_USERNAME,
                 "proj_name": f"eval-project-{project_id}",
                 "task": TASK_TO_ID[selected_task],
@@ -391,24 +392,24 @@ with st.form(key="form"):
                     },
                 },
             }
-            print(f"Payload: {payload}")
+            print(f"INFO -- Payload: {project_payload}")
             project_json_resp = http_post(
                 path="/projects/create",
-                payload=payload,
+                payload=project_payload,
                 token=HF_TOKEN,
                 domain=AUTOTRAIN_BACKEND_API,
             ).json()
-            print(project_json_resp)
+            print(f"INFO -- Project creation response: {project_json_resp}")
 
             if project_json_resp["created"]:
-                payload = {
+                data_payload = {
                     "split": 4,  # use "auto" split choice in AutoTrain
                     "col_mapping": col_mapping,
                     "load_config": {"max_size_bytes": 0, "shuffle": False},
                 }
                 data_json_resp = http_post(
                     path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
-                    payload=payload,
+                    payload=data_payload,
                     token=HF_TOKEN,
                     domain=AUTOTRAIN_BACKEND_API,
                     params={
@@ -417,24 +418,31 @@ with st.form(key="form"):
                         "split_name": selected_split,
                     },
                 ).json()
-                print(data_json_resp)
+                print(f"INFO -- Dataset creation response: {data_json_resp}")
                 if data_json_resp["download_status"] == 1:
                     train_json_resp = http_get(
                         path=f"/projects/{project_json_resp['id']}/data/start_process",
                         token=HF_TOKEN,
                         domain=AUTOTRAIN_BACKEND_API,
                     ).json()
-                    print(train_json_resp)
+                    print(f"INFO -- AutoTrain job response: {train_json_resp}")
                     if train_json_resp["success"]:
-                        st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
+                        st.success(f"✅ Successfully submitted evaluation job with project name {project_id}")
                         st.markdown(
                             f"""
-                        Evaluation takes appoximately 1 hour to complete, so grab a ☕ or 🍵 while you wait:
+                        Evaluation can take up to 1 hour to complete, so grab a ☕ or 🍵 while you wait:
 
                         📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
                             to view the results from your submission
                         """
                         )
+                        print("INFO -- Pushing evaluation job logs to the Hub")
+                        evaluation_log = {}
+                        evaluation_log["payload"] = project_payload
+                        evaluation_log["project_creation_response"] = project_json_resp
+                        evaluation_log["dataset_creation_response"] = data_json_resp
+                        evaluation_log["autotrain_job_response"] = train_json_resp
+                        commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
                     else:
                         st.error("🙈 Oh no, there was an error submitting your evaluation job!")
         else:
