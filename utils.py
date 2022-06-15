@@ -75,6 +75,9 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
     """
     # TODO: relax filter on PyTorch models if TensorFlow supported in AutoTrain
     compatible_models = []
+    if task == "extractive_question_answering":
+        dataset_ids.extend(["squad", "squad_v2"])
+
     for dataset_id in dataset_ids:
         model_filter = ModelFilter(
             task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
@@ -82,7 +85,7 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
             library=["transformers", "pytorch"],
         )
         compatible_models.extend(HfApi().list_models(filter=model_filter))
-    return sorted([model.modelId for model in compatible_models])
+    return set(sorted([model.modelId for model in compatible_models]))
 
 
 def get_key(col_mapping, val):

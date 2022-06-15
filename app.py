@@ -346,12 +346,7 @@ with st.expander("Advanced configuration"):
     )
 
 with st.form(key="form"):
-    # Grab all models fine-tuned on SQuAD for question answering tasks
-    if selected_task == "extractive_question_answering":
-        compatible_models = get_compatible_models(selected_task, [selected_dataset, "squad", "squad_v2"])
-    else:
-        compatible_models = get_compatible_models(selected_task, [selected_dataset])
-
+    compatible_models = get_compatible_models(selected_task, [selected_dataset])
     selected_models = st.multiselect(
         "Select the models you wish to evaluate",
         compatible_models,

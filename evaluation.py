@@ -43,7 +43,7 @@ def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_
         )
         candidate_id = hash(evaluation_info)
         if candidate_id in evaluation_ids:
-            st.info(f"Model {model} has already been evaluated on this configuration. Skipping evaluation...")
+            st.info(f"Model `{model}` has already been evaluated on this configuration. Skipping evaluation...")
             models.pop(idx)
 
     return models
