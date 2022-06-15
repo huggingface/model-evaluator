@@ -23,5 +23,5 @@ The table below shows which tasks are currently supported for evaluation in the 
 | `multi_label_classification`    |     ❌     |                                                                                     |
 | `entity_extraction`             |     ✅     | [`eval-staging-838`](https://huggingface.co/datasets/autoevaluate/eval-staging-838) |
 | `extractive_question_answering` |     ✅     |                                                                                     |
-| `translation`                   |     ❌     |                                                                                     |
-| `summarization`                 |     ❌     |                                                                                     |
+| `translation`                   |     ✅     |                                                                                     |
+| `summarization`                 |     ✅     |                                                                                     |
