@@ -58,7 +58,7 @@ TASK_TO_DEFAULT_METRICS = {
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
 
-@st.cache
+@st.experimental_memo
 def get_supported_metrics():
     metrics = [metric.id for metric in list_metrics()]
     supported_metrics = []
@@ -104,9 +104,9 @@ st.markdown(
     Welcome to Hugging Face's automatic model evaluator! This application allows
     you to evaluate 🤗 Transformers
     [models](https://huggingface.co/models?library=transformers&sort=downloads)
-    across a wide variety of datasets on the Hub. Please select
-    the dataset and configuration below. The results of your evaluation will be
-    displayed on the [public
+    across a wide variety of datasets on the Hub. Please select the dataset and
+    configuration below. The results of your evaluation will be displayed on the
+    [public
     leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
@@ -128,6 +128,17 @@ selected_dataset = st.selectbox(
 )
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
+# Check if selected dataset can be streamed
+is_valid_dataset = http_get(
+    path="/is-valid",
+    domain=DATASETS_PREVIEW_API,
+    params={"dataset": selected_dataset},
+).json()
+if is_valid_dataset["valid"] is False:
+    st.error(
+        """The dataset you selected is not currently supported. Open a \
+            [discussion](https://huggingface.co/spaces/autoevaluate/autoevaluate/discussions) for support."""
+    )
 
 metadata = get_metadata(selected_dataset)
 print(f"INFO -- Dataset metadata: {metadata}")
@@ -140,10 +151,19 @@ with st.expander("Advanced configuration"):
         "Select a task",
         SUPPORTED_TASKS,
         index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
+        help="""Don't see your favourite task here? Open a \
+            [discussion](https://huggingface.co/spaces/autoevaluate/autoevaluate/discussions) to request it!""",
     )
     # Select config
     configs = get_dataset_config_names(selected_dataset)
-    selected_config = st.selectbox("Select a config", configs)
+    selected_config = st.selectbox(
+        "Select a config",
+        configs,
+        help="""Some datasets contain several sub-datasets, known as _configurations_. \
+            Select one to evaluate your models on. \
+            See the [docs](https://huggingface.co/docs/datasets/master/en/load_hub#configurations) for more details.
+            """,
+    )
 
     # Select splits
     splits_resp = http_get(
@@ -166,6 +186,7 @@ with st.expander("Advanced configuration"):
             "Select a split",
             split_names,
             index=split_names.index(eval_split) if eval_split is not None else 0,
+            help="Be wary when evaluating models on the `train` split.",
         )
 
     # Select columns
@@ -180,7 +201,11 @@ with st.expander("Advanced configuration"):
     ).json()
     col_names = list(pd.json_normalize(rows_resp["rows"][0]["row"]).columns)
 
-    st.markdown("**Map your data columns**")
+    st.markdown("**Map your dataset columns**")
+    st.markdown(
+        """The model evaluator uses a standardised set of column names for the input examples and labels. \
+        Please define the mapping between your dataset columns (right) and the standardised column names (left)."""
+    )
     col1, col2 = st.columns(2)
 
     # TODO: find a better way to layout these items
@@ -196,12 +221,12 @@ with st.expander("Advanced configuration"):
             st.markdown("`target` column")
         with col2:
             text_col = st.selectbox(
-                "This column should contain the text you want to classify",
+                "This column should contain the text to be classified",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
             )
             target_col = st.selectbox(
-                "This column should contain the labels you want to assign to the text",
+                "This column should contain the labels associated with the text",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
@@ -218,12 +243,12 @@ with st.expander("Advanced configuration"):
             st.markdown("`tags` column")
         with col2:
             tokens_col = st.selectbox(
-                "This column should contain the array of tokens",
+                "This column should contain the array of tokens to be classified",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "tokens")) if metadata is not None else 0,
             )
             tags_col = st.selectbox(
-                "This column should contain the labels to associate to each part of the text",
+                "This column should contain the labels associated with each part of the text",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "tags")) if metadata is not None else 0,
             )
@@ -240,12 +265,12 @@ with st.expander("Advanced configuration"):
             st.markdown("`target` column")
         with col2:
             text_col = st.selectbox(
-                "This column should contain the text you want to translate",
+                "This column should contain the text to be translated",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "source")) if metadata is not None else 0,
             )
             target_col = st.selectbox(
-                "This column should contain an example translation of the source text",
+                "This column should contain the target translation",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
@@ -262,12 +287,12 @@ with st.expander("Advanced configuration"):
             st.markdown("`target` column")
         with col2:
             text_col = st.selectbox(
-                "This column should contain the text you want to summarize",
+                "This column should contain the text to be summarized",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
             )
             target_col = st.selectbox(
-                "This column should contain an example summarization of the text",
+                "This column should contain the target summary",
                 col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
@@ -313,7 +338,7 @@ with st.expander("Advanced configuration"):
                 index=col_names.index(get_key(col_mapping, "answers.text")) if metadata is not None else 0,
             )
             answers_start_col = st.selectbox(
-                "This column should contain the indices in the context of the first character of each answers.text",
+                "This column should contain the indices in the context of the first character of each `answers.text`",
                 col_names,
                 index=col_names.index(get_key(col_mapping, "answers.answer_start")) if metadata is not None else 0,
             )
@@ -350,7 +375,7 @@ with st.form(key="form"):
     selected_models = st.multiselect(
         "Select the models you wish to evaluate",
         compatible_models,
-        help="""Don't see your model in this list? Add the dataset and task it was trained to the \
+        help="""Don't see your model in this list? Add the dataset and task it was trained on to the \
             [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)""",
     )
     print("INFO -- Selected models before filter:", selected_models)
