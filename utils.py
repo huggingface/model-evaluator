@@ -87,7 +87,7 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
             library=["transformers", "pytorch"],
         )
         compatible_models.extend(HfApi().list_models(filter=model_filter))
-    return set(sorted([model.modelId for model in compatible_models]))
+    return sorted(set([model.modelId for model in compatible_models]))
 
 
 def get_key(col_mapping, val):
