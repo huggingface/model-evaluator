@@ -73,11 +73,13 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
     Returns:
         A list of model IDs, sorted alphabetically.
     """
-    # TODO: relax filter on PyTorch models if TensorFlow supported in AutoTrain
     compatible_models = []
+    # Include models trained on SQuAD datasets, since these can be evaluated on
+    # other SQuAD-like datasets
     if task == "extractive_question_answering":
         dataset_ids.extend(["squad", "squad_v2"])
 
+    # TODO: relax filter on PyTorch models if TensorFlow supported in AutoTrain
     for dataset_id in dataset_ids:
         model_filter = ModelFilter(
             task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
