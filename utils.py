@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import jsonlines
 import requests
@@ -17,9 +17,6 @@ AUTOTRAIN_TASK_TO_HUB_TASK = {
 
 HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items()}
 LOGS_REPO = "evaluation-job-logs"
-
-
-api = HfApi()
 
 
 def get_auth_headers(token: str, prefix: str = "autonlp"):
@@ -65,14 +62,26 @@ def get_metadata(dataset_name: str) -> Union[Dict, None]:
         return None
 
 
-def get_compatible_models(task, dataset_name):
-    # TODO: relax filter on PyTorch models once supported in AutoTrain
-    filt = ModelFilter(
-        task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
-        trained_dataset=dataset_name,
-        library=["transformers", "pytorch"],
-    )
-    compatible_models = api.list_models(filter=filt)
+def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
+    """
+    Returns all model IDs that are compatible with the given task and dataset names.
+
+    Args:
+        task (`str`): The task to search for.
+        dataset_names (`List[str]`): A list of dataset names to search for.
+
+    Returns:
+        A list of model IDs, sorted alphabetically.
+    """
+    # TODO: relax filter on PyTorch models if TensorFlow supported in AutoTrain
+    compatible_models = []
+    for dataset_id in dataset_ids:
+        model_filter = ModelFilter(
+            task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
+            trained_dataset=dataset_id,
+            library=["transformers", "pytorch"],
+        )
+        compatible_models.extend(HfApi().list_models(filter=model_filter))
     return sorted([model.modelId for model in compatible_models])
 
 

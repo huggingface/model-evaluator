@@ -67,6 +67,7 @@ def get_supported_metrics():
         # in the same environment. Refactor to avoid needing to actually load
         # the metric.
         try:
+            print(f"INFO -- Attempting to load metric: {metric}")
             metric_func = load(metric)
         except Exception as e:
             print(e)
@@ -103,7 +104,7 @@ st.markdown(
     Welcome to Hugging Face's automatic model evaluator! This application allows
     you to evaluate 🤗 Transformers
     [models](https://huggingface.co/models?library=transformers&sort=downloads)
-    across a wide variety of datasets on the Hub -- all for free! Please select
+    across a wide variety of datasets on the Hub. Please select
     the dataset and configuration below. The results of your evaluation will be
     displayed on the [public
     leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
@@ -345,8 +346,12 @@ with st.expander("Advanced configuration"):
     )
 
 with st.form(key="form"):
+    # Grab all models fine-tuned on SQuAD for question answering tasks
+    if selected_task == "extractive_question_answering":
+        compatible_models = get_compatible_models(selected_task, [selected_dataset, "squad", "squad_v2"])
+    else:
+        compatible_models = get_compatible_models(selected_task, [selected_dataset])
 
-    compatible_models = get_compatible_models(selected_task, selected_dataset)
     selected_models = st.multiselect(
         "Select the models you wish to evaluate",
         compatible_models,
