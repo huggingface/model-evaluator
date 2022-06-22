@@ -27,16 +27,16 @@ AUTOTRAIN_USERNAME = os.getenv("AUTOTRAIN_USERNAME")
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 DATASETS_PREVIEW_API = os.getenv("DATASETS_PREVIEW_API")
 
-
+# Put image tasks on top
 TASK_TO_ID = {
+    "image_binary_classification": 17,
+    "image_multi_class_classification": 18,
     "binary_classification": 1,
     "multi_class_classification": 2,
     "entity_extraction": 4,
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
-    "image_binary_classification": 17,
-    "image_multi_class_classification": 18,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -434,6 +434,8 @@ with st.form(key="form"):
         )
         print("INFO -- Selected models after filter:", selected_models)
 
+    hf_username = st.text_input("Enter your 🤗 Hub username to be notified when the evaluation is finished")
+
     submit_button = st.form_submit_button("Evaluate models 🚀")
 
     if submit_button:
@@ -455,10 +457,7 @@ with st.form(key="form"):
                         "num_instances": 1,
                         "disk_size_gb": 150,
                     },
-                    "evaluation": {
-                        "metrics": selected_metrics,
-                        "models": selected_models,
-                    },
+                    "evaluation": {"metrics": selected_metrics, "models": selected_models, "hf_username": hf_username},
                 },
             }
             print(f"INFO -- Payload: {project_payload}")
@@ -496,7 +495,7 @@ with st.form(key="form"):
                     ).json()
                     print(f"INFO -- AutoTrain job response: {train_json_resp}")
                     if train_json_resp["success"]:
-                        st.success(f"✅ Successfully submitted evaluation job with project name {project_id}")
+                        st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
                         st.markdown(
                             f"""
                         Evaluation can take up to 1 hour to complete, so grab a ☕ or 🍵 while you wait:
