@@ -11,13 +11,14 @@ from tqdm import tqdm
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
     "multi_class_classification": "text-classification",
-    # "multi_label_classification": "text-classification", # Not fully supported in AutoTrain
     "entity_extraction": "token-classification",
     "extractive_question_answering": "question-answering",
     "translation": "translation",
     "summarization": "summarization",
-    # "single_column_regression": 10,
+    "image_binary_classification": "image-classification",
+    "image_multi_class_classification": "image-classification",
 }
+
 
 HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items()}
 LOGS_REPO = "evaluation-job-logs"

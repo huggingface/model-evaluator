@@ -31,11 +31,12 @@ DATASETS_PREVIEW_API = os.getenv("DATASETS_PREVIEW_API")
 TASK_TO_ID = {
     "binary_classification": 1,
     "multi_class_classification": 2,
-    # "multi_label_classification": 3, # Not fully supported in AutoTrain
     "entity_extraction": 4,
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
+    "image_binary_classification": 17,
+    "image_multi_class_classification": 18,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -50,7 +51,21 @@ TASK_TO_DEFAULT_METRICS = {
     "extractive_question_answering": [],
     "translation": ["sacrebleu"],
     "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum"],
+    "image_binary_classification": ["f1", "precision", "recall", "auc", "accuracy"],
+    "image_multi_class_classification": [
+        "f1",
+        "precision",
+        "recall",
+        "accuracy",
+    ],
 }
+
+AUTOTRAIN_TASK_TO_LANG = {
+    "translation": "en2de",
+    "image_binary_classification": "unk",
+    "image_multi_class_classification": "unk",
+}
+
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
@@ -355,6 +370,27 @@ with st.expander("Advanced configuration"):
             col_mapping[question_col] = "question"
             col_mapping[answers_text_col] = "answers.text"
             col_mapping[answers_start_col] = "answers.answer_start"
+    elif selected_task in ["image_binary_classification", "image_multi_class_classification"]:
+        with col1:
+            st.markdown("`image` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            image_col = st.selectbox(
+                "This column should contain the images to be classified",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "image")) if metadata is not None else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the labels associated with the images",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+            )
+            col_mapping[image_col] = "image"
+            col_mapping[target_col] = "target"
 
     # Select metrics
     st.markdown("**Select metrics**")
@@ -408,9 +444,9 @@ with st.form(key="form"):
                 "proj_name": f"eval-project-{project_id}",
                 "task": TASK_TO_ID[selected_task],
                 "config": {
-                    "language": "en"
-                    if selected_task != "translation"
-                    else "en2de",  # Need this dummy pair to enable translation
+                    "language": AUTOTRAIN_TASK_TO_LANG[selected_task]
+                    if selected_task in AUTOTRAIN_TASK_TO_LANG
+                    else "en",
                     "max_models": 5,
                     "instance": {
                         "provider": "aws",
