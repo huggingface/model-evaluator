@@ -1,4 +1,3 @@
-import inspect
 import os
 import uuid
 from pathlib import Path
@@ -7,9 +6,7 @@ import pandas as pd
 import streamlit as st
 from datasets import get_dataset_config_names
 from dotenv import load_dotenv
-from evaluate import load
-from huggingface_hub import list_datasets, list_metrics
-from tqdm import tqdm
+from huggingface_hub import list_datasets
 
 from evaluation import filter_evaluated_models
 from utils import (
@@ -57,42 +54,53 @@ TASK_TO_DEFAULT_METRICS = {
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
-
-@st.experimental_memo
-def get_supported_metrics():
-    metrics = [metric.id for metric in list_metrics()]
-    supported_metrics = []
-    for metric in tqdm(metrics):
-        # TODO: this currently requires all metric dependencies to be installed
-        # in the same environment. Refactor to avoid needing to actually load
-        # the metric.
-        try:
-            print(f"INFO -- Attempting to load metric: {metric}")
-            metric_func = load(metric)
-        except Exception as e:
-            print(e)
-            print("WARNING -- Skipping the following metric, which cannot load:", metric)
-            continue
-
-        argspec = inspect.getfullargspec(metric_func.compute)
-        if "references" in argspec.kwonlyargs and "predictions" in argspec.kwonlyargs:
-            # We require that "references" and "predictions" are arguments
-            # to the metric function. We also require that the other arguments
-            # besides "references" and "predictions" have defaults and so do not
-            # need to be specified explicitly.
-            defaults = True
-            for key, value in argspec.kwonlydefaults.items():
-                if key not in ("references", "predictions"):
-                    if value is None:
-                        defaults = False
-                        break
-
-            if defaults:
-                supported_metrics.append(metric)
-    return supported_metrics
-
-
-supported_metrics = get_supported_metrics()
+# Extracted from utils.get_supported_metrics
+# Hardcoded for now due to speed / caching constraints
+SUPPORTED_METRICS = [
+    "accuracy",
+    "bertscore",
+    "bleu",
+    "cer",
+    "chrf",
+    "code_eval",
+    "comet",
+    "competition_math",
+    "coval",
+    "cuad",
+    "exact_match",
+    "f1",
+    "frugalscore",
+    "google_bleu",
+    "mae",
+    "mahalanobis",
+    "matthews_correlation",
+    "mean_iou",
+    "meteor",
+    "mse",
+    "pearsonr",
+    "perplexity",
+    "precision",
+    "recall",
+    "roc_auc",
+    "rouge",
+    "sacrebleu",
+    "sari",
+    "seqeval",
+    "spearmanr",
+    "squad",
+    "squad_v2",
+    "ter",
+    "trec_eval",
+    "wer",
+    "wiki_split",
+    "xnli",
+    "angelina-wang/directional_bias_amplification",
+    "jordyvl/ece",
+    "lvwerra/ai4code",
+    "lvwerra/amex",
+    "lvwerra/test",
+    "lvwerra/test_metric",
+]
 
 
 #######
@@ -101,12 +109,13 @@ supported_metrics = get_supported_metrics()
 st.title("Evaluation on the Hub")
 st.markdown(
     """
-    Welcome to Hugging Face's automatic model evaluator! This application allows
-    you to evaluate 🤗 Transformers
+    Welcome to Hugging Face's automatic model evaluator 👋!
+
+    This application allows you to evaluate 🤗 Transformers
     [models](https://huggingface.co/models?library=transformers&sort=downloads)
-    across a wide variety of datasets on the Hub. Please select the dataset and
-    configuration below. The results of your evaluation will be displayed on the
-    [public
+    across a wide variety of [datasets](https://huggingface.co/datasets) on the
+    Hub. Please select the dataset and configuration below. The results of your
+    evaluation will be displayed on the [public
     leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
@@ -363,11 +372,10 @@ with st.expander("Advanced configuration"):
     st.markdown(html_string, unsafe_allow_html=True)
     selected_metrics = st.multiselect(
         "(Optional) Select additional metrics",
-        list(set(supported_metrics) - set(TASK_TO_DEFAULT_METRICS[selected_task])),
-    )
-    st.info(
-        """Note: user-selected metrics will be run with their default arguments. \
-            Check out the [available metrics](https://huggingface.co/metrics) for more details."""
+        sorted(list(set(SUPPORTED_METRICS) - set(TASK_TO_DEFAULT_METRICS[selected_task]))),
+        help="""User-selected metrics will be computed with their default arguments. \
+            For example, `f1` will report results for binary labels. \
+            Check out the [available metrics](https://huggingface.co/metrics) for more details.""",
     )
 
 with st.form(key="form"):
@@ -375,7 +383,7 @@ with st.form(key="form"):
     selected_models = st.multiselect(
         "Select the models you wish to evaluate",
         compatible_models,
-        help="""Don't see your model in this list? Add the dataset and task it was trained on to the \
+        help="""Don't see your favourite model in this list? Add the dataset and task it was trained on to the \
             [model card metadata.](https://huggingface.co/docs/hub/models-cards#model-card-metadata)""",
     )
     print("INFO -- Selected models before filter:", selected_models)

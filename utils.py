@@ -1,8 +1,12 @@
+import inspect
 from typing import Dict, List, Union
 
 import jsonlines
 import requests
-from huggingface_hub import HfApi, ModelFilter, Repository, dataset_info
+import streamlit as st
+from evaluate import load
+from huggingface_hub import HfApi, ModelFilter, Repository, dataset_info, list_metrics
+from tqdm import tqdm
 
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
@@ -128,3 +132,42 @@ def commit_evaluation_log(evaluation_log, hf_access_token=None):
         commit_message=f"Evaluation submitted with project name {evaluation_log['payload']['proj_name']}"
     )
     print("INFO -- Pushed evaluation logs to the Hub")
+
+
+@st.experimental_memo
+def get_supported_metrics():
+    """Helper function to get all metrics compatible with evaluation service.
+
+    Requires all metric dependencies installed in the same environment, so wait until
+    https://github.com/huggingface/evaluate/issues/138 is resolved before using this.
+    """
+    metrics = [metric.id for metric in list_metrics()]
+    supported_metrics = []
+    for metric in tqdm(metrics):
+        # TODO: this currently requires all metric dependencies to be installed
+        # in the same environment. Refactor to avoid needing to actually load
+        # the metric.
+        try:
+            print(f"INFO -- Attempting to load metric: {metric}")
+            metric_func = load(metric)
+        except Exception as e:
+            print(e)
+            print("WARNING -- Skipping the following metric, which cannot load:", metric)
+            continue
+
+        argspec = inspect.getfullargspec(metric_func.compute)
+        if "references" in argspec.kwonlyargs and "predictions" in argspec.kwonlyargs:
+            # We require that "references" and "predictions" are arguments
+            # to the metric function. We also require that the other arguments
+            # besides "references" and "predictions" have defaults and so do not
+            # need to be specified explicitly.
+            defaults = True
+            for key, value in argspec.kwonlydefaults.items():
+                if key not in ("references", "predictions"):
+                    if value is None:
+                        defaults = False
+                        break
+
+            if defaults:
+                supported_metrics.append(metric)
+    return supported_metrics

@@ -7,7 +7,5 @@ jsonlines
 # Dataset specific deps
 py7zr<0.19
 openpyxl<3.1
-# Metric specific deps
-scikit-learn<1.2
 # Dirty bug from Google
 protobuf<=3.20.1
