@@ -1,5 +1,5 @@
 ---
-title: AutoEvaluate
+title: Model Evaluator
 emoji: 📊
 colorFrom: red
 colorTo: red
@@ -8,7 +8,7 @@ sdk_version: 1.10.0
 app_file: app.py
 ---
 
-# AutoEvaluate
+# Model Evaluator
 
 > Submit evaluation jobs to AutoTrain from the Hugging Face Hub
 
@@ -16,12 +16,28 @@ app_file: app.py
 
 The table below shows which tasks are currently supported for evaluation in the AutoTrain backend:
 
-| Task                            | Supported | Sample prediction repository                                                        |
-|:--------------------------------|:---------:|:------------------------------------------------------------------------------------|
-| `binary_classification`         |     ✅     | [`eval-staging-835`](https://huggingface.co/datasets/autoevaluate/eval-staging-835) |
-| `multi_class_classification`    |     ✅     | [`eval-staging-822`](https://huggingface.co/datasets/autoevaluate/eval-staging-822) |
-| `multi_label_classification`    |     ❌     |                                                                                     |
-| `entity_extraction`             |     ✅     | [`eval-staging-838`](https://huggingface.co/datasets/autoevaluate/eval-staging-838) |
-| `extractive_question_answering` |     ✅     |                                                                                     |
-| `translation`                   |     ✅     |                                                                                     |
-| `summarization`                 |     ✅     |                                                                                     |
+| Task                               | Supported |
+|:-----------------------------------|:---------:|
+| `binary_classification`            |     ✅     |
+| `multi_class_classification`       |     ✅     |
+| `multi_label_classification`       |     ❌     |
+| `entity_extraction`                |     ✅     |
+| `extractive_question_answering`    |     ✅     |
+| `translation`                      |     ✅     |
+| `summarization`                    |     ✅     |
+| `image_binary_classification`      |     ✅     |
+| `image_multi_class_classification` |     ✅     |
+
+## Installation
+
+To run the application, first clone this repository and install the dependencies as follows:
+
+```
+pip install -r requirements.txt
+```
+
+Then spin up the application by running:
+
+```
+streamlit run app.py
+```

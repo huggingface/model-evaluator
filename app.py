@@ -161,7 +161,7 @@ is_valid_dataset = http_get(
 if is_valid_dataset["valid"] is False:
     st.error(
         """The dataset you selected is not currently supported. Open a \
-            [discussion](https://huggingface.co/spaces/autoevaluate/autoevaluate/discussions) for support."""
+            [discussion](https://huggingface.co/spaces/autoevaluate/model-evaluator/discussions) for support."""
     )
 
 metadata = get_metadata(selected_dataset)
@@ -176,7 +176,7 @@ with st.expander("Advanced configuration"):
         SUPPORTED_TASKS,
         index=SUPPORTED_TASKS.index(metadata[0]["task_id"]) if metadata is not None else 0,
         help="""Don't see your favourite task here? Open a \
-            [discussion](https://huggingface.co/spaces/autoevaluate/autoevaluate/discussions) to request it!""",
+            [discussion](https://huggingface.co/spaces/autoevaluate/model-evaluator/discussions) to request it!""",
     )
     # Select config
     configs = get_dataset_config_names(selected_dataset)

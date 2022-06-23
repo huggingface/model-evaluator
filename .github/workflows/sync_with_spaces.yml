@@ -17,4 +17,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push https://lewtun:$HF_TOKEN@huggingface.co/spaces/autoevaluate/autoevaluate main
+          git push https://lewtun:$HF_TOKEN@huggingface.co/spaces/autoevaluate/model-evaluator main
