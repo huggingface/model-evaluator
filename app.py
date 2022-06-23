@@ -131,7 +131,7 @@ st.markdown(
     across a wide variety of [datasets](https://huggingface.co/datasets) on the
     Hub. Please select the dataset and configuration below. The results of your
     evaluation will be displayed on the [public
-    leaderboard](https://huggingface.co/spaces/autoevaluate/leaderboards).
+    leaderboards](https://huggingface.co/spaces/autoevaluate/leaderboards).
     """
 )
 
@@ -495,13 +495,17 @@ with st.form(key="form"):
                     ).json()
                     print(f"INFO -- AutoTrain job response: {train_json_resp}")
                     if train_json_resp["success"]:
-                        st.success(f"✅ Successfully submitted evaluation job with project ID {project_id}")
+                        st.success("✅ Successfully submitted evaluation job!")
                         st.markdown(
                             f"""
-                        Evaluation can take up to 1 hour to complete, so grab a ☕ or 🍵 while you wait:
+                        Evaluation can take up to 1 hour to complete, so grab a ☕️ or 🍵 while you wait:
 
-                        📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
-                            to view the results from your submission
+                        * 🔔 A \
+                            [Hub pull request](https://huggingface.co/docs/hub/repositories-pull-requests-discussions)\
+                                with the evaluation results will be opened for each model you selected. \
+                                Check your email for notifications.
+                        * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
+                            to view the results from your submission once the Hub pull request is merged.
                         """
                         )
                         print("INFO -- Pushing evaluation job logs to the Hub")
