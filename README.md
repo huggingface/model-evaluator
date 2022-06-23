@@ -1,5 +1,5 @@
 ---
-title: AutoEvaluate
+title: Model Evaluator
 emoji: 📊
 colorFrom: red
 colorTo: red
