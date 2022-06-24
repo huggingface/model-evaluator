@@ -59,8 +59,8 @@ def http_get(path: str, domain: str, token: str = None, params: dict = None) -> 
     return response
 
 
-def get_metadata(dataset_name: str) -> Union[Dict, None]:
-    data = dataset_info(dataset_name)
+def get_metadata(dataset_name: str, token: str) -> Union[Dict, None]:
+    data = dataset_info(dataset_name, token=token)
     if data.cardData is not None and "train-eval-index" in data.cardData.keys():
         return data.cardData["train-eval-index"]
     else:
