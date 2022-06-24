@@ -165,7 +165,7 @@ if is_valid_dataset["valid"] is False:
             [discussion](https://huggingface.co/spaces/autoevaluate/model-evaluator/discussions) for support."""
     )
 
-metadata = get_metadata(selected_dataset)
+metadata = get_metadata(selected_dataset, token=HF_TOKEN)
 print(f"INFO -- Dataset metadata: {metadata}")
 if metadata is None:
     st.warning("No evaluation metadata found. Please configure the evaluation job below.")
