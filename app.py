@@ -15,6 +15,7 @@ from utils import (
     commit_evaluation_log,
     format_col_mapping,
     get_compatible_models,
+    get_dataset_card_url,
     get_key,
     get_metadata,
     http_get,
@@ -510,6 +511,7 @@ with st.form(key="form"):
                             ]
                         }
                         selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
+                        dataset_card_url = get_dataset_card_url(selected_dataset)
                         st.success("✅ Successfully submitted evaluation job!")
                         st.markdown(
                             f"""
@@ -522,8 +524,7 @@ with st.form(key="form"):
                         * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
                             to view the results from your submission once the Hub pull request is merged.
                         * 🥱 Tired of configuring evaluations? Add the following metadata to the \
-                            [dataset card](https://huggingface.co/datasets/{selected_dataset}/blob/main/README.md) \
-                                to enable 1-click evaluations:
+                            [dataset card]({dataset_card_url}) to enable 1-click evaluations:
                         """
                         )
                         st.markdown(
