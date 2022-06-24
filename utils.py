@@ -172,3 +172,11 @@ def get_supported_metrics():
             if defaults:
                 supported_metrics.append(metric)
     return supported_metrics
+
+
+def get_dataset_card_url(dataset_id: str) -> str:
+    """Gets the URL to edit the dataset card for the given dataset ID."""
+    if "/" in dataset_id:
+        return f"https://huggingface.co/datasets/{dataset_id}/edit/main/README.md"
+    else:
+        return f"https://github.com/huggingface/datasets/edit/master/datasets/{dataset_id}/README.md"
