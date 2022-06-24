@@ -4,12 +4,14 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import yaml
 from datasets import get_dataset_config_names
 from dotenv import load_dotenv
 from huggingface_hub import list_datasets
 
 from evaluation import filter_evaluated_models
 from utils import (
+    AUTOTRAIN_TASK_TO_HUB_TASK,
     commit_evaluation_log,
     format_col_mapping,
     get_compatible_models,
@@ -146,9 +148,8 @@ selected_dataset = st.selectbox(
     "Select a dataset",
     all_datasets,
     index=all_datasets.index(default_dataset),
-    help="""Datasets with metadata can be evaluated with 1-click. Check out the \
-        [documentation](https://huggingface.co/docs/hub/datasets-cards) to add \
-        evaluation metadata to a dataset.""",
+    help="""Datasets with metadata can be evaluated with 1-click. Configure an evaluation job to add \
+        new metadata to a dataset card.""",
 )
 st.experimental_set_query_params(**{"dataset": [selected_dataset]})
 
@@ -495,6 +496,18 @@ with st.form(key="form"):
                     ).json()
                     print(f"INFO -- AutoTrain job response: {train_json_resp}")
                     if train_json_resp["success"]:
+                        train_eval_index = {
+                            "train-eval-index": [
+                                {
+                                    "config": selected_config,
+                                    "task": AUTOTRAIN_TASK_TO_HUB_TASK[selected_task],
+                                    "task_id": selected_task,
+                                    "splits": {"eval_split": selected_split},
+                                    "col_mapping": col_mapping,
+                                }
+                            ]
+                        }
+                        selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
                         st.success("✅ Successfully submitted evaluation job!")
                         st.markdown(
                             f"""
@@ -506,6 +519,15 @@ with st.form(key="form"):
                                 Check your email for notifications.
                         * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
                             to view the results from your submission once the Hub pull request is merged.
+                        * Add the following metadata to the \
+                            [dataset card](https://huggingface.co/datasets/{selected_dataset}/blob/main/README.md) \
+                                to enable 1-click evaluations:
+                        """
+                        )
+                        st.markdown(
+                            f"""
+                        ```yaml
+                        {selected_metadata}
                         """
                         )
                         print("INFO -- Pushing evaluation job logs to the Hub")
