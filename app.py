@@ -521,7 +521,7 @@ with st.form(key="form"):
                                 Check your email for notifications.
                         * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
                             to view the results from your submission once the Hub pull request is merged.
-                        * Add the following metadata to the \
+                        * 🥱 Tired of configuring evaluations? Add the following metadata to the \
                             [dataset card](https://huggingface.co/datasets/{selected_dataset}/blob/main/README.md) \
                                 to enable 1-click evaluations:
                         """
