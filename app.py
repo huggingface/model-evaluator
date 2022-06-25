@@ -433,6 +433,7 @@ with st.form(key="form"):
             selected_dataset,
             selected_config,
             selected_split,
+            selected_metrics,
         )
         print("INFO -- Selected models after filter:", selected_models)
 

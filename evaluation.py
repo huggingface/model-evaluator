@@ -12,12 +12,17 @@ class EvaluationInfo:
     dataset_name: str
     dataset_config: str
     dataset_split: str
+    metrics: set
 
 
 def compute_evaluation_id(dataset_info: DatasetInfo) -> int:
     if dataset_info.cardData is not None:
         metadata = dataset_info.cardData["eval_info"]
         metadata.pop("col_mapping", None)
+        # TODO(lewtun): populate dataset cards with metric info
+        if "metrics" not in metadata:
+            metadata["metrics"] = frozenset()
+        metadata["metrics"] = frozenset(metadata["metrics"])
         evaluation_info = EvaluationInfo(**metadata)
         return hash(evaluation_info)
     else:
@@ -30,7 +35,7 @@ def get_evaluation_ids():
     return [compute_evaluation_id(dset) for dset in evaluation_datasets]
 
 
-def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_split):
+def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_split, metrics):
     evaluation_ids = get_evaluation_ids()
 
     for idx, model in enumerate(models):
@@ -40,10 +45,14 @@ def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_
             dataset_name=dataset_name,
             dataset_config=dataset_config,
             dataset_split=dataset_split,
+            metrics=frozenset(metrics),
         )
         candidate_id = hash(evaluation_info)
         if candidate_id in evaluation_ids:
-            st.info(f"Model `{model}` has already been evaluated on this configuration. Skipping evaluation...")
+            st.info(
+                f"Model `{model}` has already been evaluated on this configuration. \
+                    This model will be excluded from the evaluation job..."
+            )
             models.pop(idx)
 
     return models
