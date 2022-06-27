@@ -37,7 +37,7 @@ TASK_TO_ID = {
     "binary_classification": 1,
     "multi_class_classification": 2,
     "entity_extraction": 4,
-    "extractive_question_answering": 5,
+    # "extractive_question_answering": 5, # Disabled until we have SQuAD metrics support
     "translation": 6,
     "summarization": 8,
 }
@@ -71,6 +71,7 @@ AUTOTRAIN_TASK_TO_LANG = {
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
+UNSUPPORTED_TASKS = ["extractive_question_answering"]
 
 # Extracted from utils.get_supported_metrics
 # Hardcoded for now due to speed / caching constraints
@@ -173,6 +174,10 @@ if metadata is None:
 
 with st.expander("Advanced configuration"):
     # Select task
+    # Hack to filter for unsupported tasks
+    # TODO(lewtun): remove this once we have SQuAD metrics support
+    if metadata[0]["task_id"] in UNSUPPORTED_TASKS:
+        metadata = None
     selected_task = st.selectbox(
         "Select a task",
         SUPPORTED_TASKS,

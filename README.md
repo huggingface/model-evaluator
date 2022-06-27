@@ -22,7 +22,7 @@ The table below shows which tasks are currently supported for evaluation in the 
 | `multi_class_classification`       |     ✅     |
 | `multi_label_classification`       |     ❌     |
 | `entity_extraction`                |     ✅     |
-| `extractive_question_answering`    |     ✅     |
+| `extractive_question_answering`    |     ❌     |
 | `translation`                      |     ✅     |
 | `summarization`                    |     ✅     |
 | `image_binary_classification`      |     ✅     |
