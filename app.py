@@ -176,7 +176,7 @@ with st.expander("Advanced configuration"):
     # Select task
     # Hack to filter for unsupported tasks
     # TODO(lewtun): remove this once we have SQuAD metrics support
-    if metadata[0]["task_id"] in UNSUPPORTED_TASKS:
+    if metadata is not None and metadata[0]["task_id"] in UNSUPPORTED_TASKS:
         metadata = None
     selected_task = st.selectbox(
         "Select a task",
