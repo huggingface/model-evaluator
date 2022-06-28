@@ -135,7 +135,9 @@ st.markdown(
     across a wide variety of [datasets](https://huggingface.co/datasets) on the
     Hub. Please select the dataset and configuration below. The results of your
     evaluation will be displayed on the [public
-    leaderboards](https://huggingface.co/spaces/autoevaluate/leaderboards).
+    leaderboards](https://huggingface.co/spaces/autoevaluate/leaderboards). For
+    more details, check out out our [blog
+    post](https://huggingface.co/blog/eval-on-the-hub).
     """
 )
 
