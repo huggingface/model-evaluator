@@ -141,10 +141,13 @@ st.markdown(
 
 all_datasets = [d.id for d in list_datasets()]
 query_params = st.experimental_get_query_params()
+if "first_query_params" not in st.session_state:
+    st.session_state.first_query_params = query_params
+first_query_params = st.session_state.first_query_params
 default_dataset = all_datasets[0]
-if "dataset" in query_params:
-    if len(query_params["dataset"]) > 0 and query_params["dataset"][0] in all_datasets:
-        default_dataset = query_params["dataset"][0]
+if "dataset" in first_query_params:
+    if len(first_query_params["dataset"]) > 0 and first_query_params["dataset"][0] in all_datasets:
+        default_dataset = first_query_params["dataset"][0]
 
 selected_dataset = st.selectbox(
     "Select a dataset",
