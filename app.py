@@ -137,7 +137,7 @@ st.markdown(
     evaluation will be displayed on the [public
     leaderboards](https://huggingface.co/spaces/autoevaluate/leaderboards). For
     more details, check out out our [blog
-    post](https://huggingface.co/blog/eval-on-the-hub-launch).
+    post](https://huggingface.co/blog/eval-on-the-hub).
     """
 )
 
