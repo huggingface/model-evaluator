@@ -436,17 +436,6 @@ with st.form(key="form"):
     )
     print("INFO -- Selected models before filter:", selected_models)
 
-    if len(selected_models) > 0:
-        selected_models = filter_evaluated_models(
-            selected_models,
-            selected_task,
-            selected_dataset,
-            selected_config,
-            selected_split,
-            selected_metrics,
-        )
-        print("INFO -- Selected models after filter:", selected_models)
-
     hf_username = st.text_input("Enter your 🤗 Hub username to be notified when the evaluation is finished")
 
     submit_button = st.form_submit_button("Evaluate models 🚀")
@@ -456,7 +445,18 @@ with st.form(key="form"):
             st.warning("No 🤗 Hub username provided! Please enter your username and try again.")
         elif len(selected_models) > 10:
             st.warning("Only 10 models can be evaluated at once. Please select fewer models to evaluate.")
-        elif len(selected_models) > 0 and len(selected_models) <= 10:
+        elif len(selected_models) > 0:
+            # Filter out previsouly evaluated models
+            selected_models = filter_evaluated_models(
+                selected_models,
+                selected_task,
+                selected_dataset,
+                selected_config,
+                selected_split,
+                selected_metrics,
+            )
+            print("INFO -- Selected models after filter:", selected_models)
+
             project_id = str(uuid.uuid4())[:8]
             project_payload = {
                 "username": AUTOTRAIN_USERNAME,
