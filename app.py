@@ -448,11 +448,14 @@ with st.form(key="form"):
         print("INFO -- Selected models after filter:", selected_models)
 
     hf_username = st.text_input("Enter your 🤗 Hub username to be notified when the evaluation is finished")
+    st.write(hf_username)
 
     submit_button = st.form_submit_button("Evaluate models 🚀")
 
     if submit_button:
-        if len(selected_models) > 10:
+        if len(hf_username) == 0:
+            st.warning("No 🤗 Hub username provided! Please enter your username and try again.")
+        elif len(selected_models) > 10:
             st.warning("Only 10 models can be evaluated at once. Please select fewer models to evaluate.")
         elif len(selected_models) > 0 and len(selected_models) <= 10:
             project_id = str(uuid.uuid4())[:8]
