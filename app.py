@@ -448,7 +448,6 @@ with st.form(key="form"):
         print("INFO -- Selected models after filter:", selected_models)
 
     hf_username = st.text_input("Enter your 🤗 Hub username to be notified when the evaluation is finished")
-    st.write(hf_username)
 
     submit_button = st.form_submit_button("Evaluate models 🚀")
 
