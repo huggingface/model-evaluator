@@ -443,9 +443,11 @@ with st.form(key="form"):
     if submit_button:
         if len(hf_username) == 0:
             st.warning("No 🤗 Hub username provided! Please enter your username and try again.")
+        elif len(selected_models) == 0:
+            st.warning("⚠️ No models were selected for evaluation! Please select at least one model and try again.")
         elif len(selected_models) > 10:
             st.warning("Only 10 models can be evaluated at once. Please select fewer models to evaluate.")
-        elif len(selected_models) > 0:
+        else:
             # Filter out previsouly evaluated models
             selected_models = filter_evaluated_models(
                 selected_models,
@@ -555,5 +557,3 @@ with st.form(key="form"):
                         commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
                     else:
                         st.error("🙈 Oh no, there was an error submitting your evaluation job!")
-        else:
-            st.warning("⚠️ No models were selected for evaluation!")
