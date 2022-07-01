@@ -6,7 +6,7 @@ from huggingface_hub import DatasetFilter, HfApi
 from huggingface_hub.hf_api import DatasetInfo
 
 
-@dataclass(frozen=True, eq=True, unsafe_hash=True)
+@dataclass(frozen=True, eq=True)
 class EvaluationInfo:
     task: str
     model: str
