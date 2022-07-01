@@ -436,17 +436,6 @@ with st.form(key="form"):
     )
     print("INFO -- Selected models before filter:", selected_models)
 
-    if len(selected_models) > 0:
-        selected_models = filter_evaluated_models(
-            selected_models,
-            selected_task,
-            selected_dataset,
-            selected_config,
-            selected_split,
-            selected_metrics,
-        )
-        print("INFO -- Selected models after filter:", selected_models)
-
     hf_username = st.text_input("Enter your 🤗 Hub username to be notified when the evaluation is finished")
 
     submit_button = st.form_submit_button("Evaluate models 🚀")
@@ -454,106 +443,118 @@ with st.form(key="form"):
     if submit_button:
         if len(hf_username) == 0:
             st.warning("No 🤗 Hub username provided! Please enter your username and try again.")
+        elif len(selected_models) == 0:
+            st.warning("⚠️ No models were selected for evaluation! Please select at least one model and try again.")
         elif len(selected_models) > 10:
-            st.warning("Only 10 models can be evaluated at once. Please select fewer models to evaluate.")
-        elif len(selected_models) > 0 and len(selected_models) <= 10:
-            project_id = str(uuid.uuid4())[:8]
-            project_payload = {
-                "username": AUTOTRAIN_USERNAME,
-                "proj_name": f"eval-project-{project_id}",
-                "task": TASK_TO_ID[selected_task],
-                "config": {
-                    "language": AUTOTRAIN_TASK_TO_LANG[selected_task]
-                    if selected_task in AUTOTRAIN_TASK_TO_LANG
-                    else "en",
-                    "max_models": 5,
-                    "instance": {
-                        "provider": "aws",
-                        "instance_type": "ml.g4dn.4xlarge",
-                        "max_runtime_seconds": 172800,
-                        "num_instances": 1,
-                        "disk_size_gb": 150,
+            st.warning("Only 10 models can be evaluated at once. Please select fewer models and try again.")
+        else:
+            # Filter out previously evaluated models
+            selected_models = filter_evaluated_models(
+                selected_models,
+                selected_task,
+                selected_dataset,
+                selected_config,
+                selected_split,
+                selected_metrics,
+            )
+            print("INFO -- Selected models after filter:", selected_models)
+            if len(selected_models) > 0:
+                project_id = str(uuid.uuid4())[:8]
+                project_payload = {
+                    "username": AUTOTRAIN_USERNAME,
+                    "proj_name": f"eval-project-{project_id}",
+                    "task": TASK_TO_ID[selected_task],
+                    "config": {
+                        "language": AUTOTRAIN_TASK_TO_LANG[selected_task]
+                        if selected_task in AUTOTRAIN_TASK_TO_LANG
+                        else "en",
+                        "max_models": 5,
+                        "instance": {
+                            "provider": "aws",
+                            "instance_type": "ml.g4dn.4xlarge",
+                            "max_runtime_seconds": 172800,
+                            "num_instances": 1,
+                            "disk_size_gb": 150,
+                        },
+                        "evaluation": {
+                            "metrics": selected_metrics,
+                            "models": selected_models,
+                            "hf_username": hf_username,
+                        },
                     },
-                    "evaluation": {"metrics": selected_metrics, "models": selected_models, "hf_username": hf_username},
-                },
-            }
-            print(f"INFO -- Payload: {project_payload}")
-            project_json_resp = http_post(
-                path="/projects/create",
-                payload=project_payload,
-                token=HF_TOKEN,
-                domain=AUTOTRAIN_BACKEND_API,
-            ).json()
-            print(f"INFO -- Project creation response: {project_json_resp}")
-
-            if project_json_resp["created"]:
-                data_payload = {
-                    "split": 4,  # use "auto" split choice in AutoTrain
-                    "col_mapping": col_mapping,
-                    "load_config": {"max_size_bytes": 0, "shuffle": False},
                 }
-                data_json_resp = http_post(
-                    path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
-                    payload=data_payload,
+                print(f"INFO -- Payload: {project_payload}")
+                project_json_resp = http_post(
+                    path="/projects/create",
+                    payload=project_payload,
                     token=HF_TOKEN,
                     domain=AUTOTRAIN_BACKEND_API,
-                    params={
-                        "type": "dataset",
-                        "config_name": selected_config,
-                        "split_name": selected_split,
-                    },
                 ).json()
-                print(f"INFO -- Dataset creation response: {data_json_resp}")
-                if data_json_resp["download_status"] == 1:
-                    train_json_resp = http_get(
-                        path=f"/projects/{project_json_resp['id']}/data/start_process",
+                print(f"INFO -- Project creation response: {project_json_resp}")
+
+                if project_json_resp["created"]:
+                    data_payload = {
+                        "split": 4,  # use "auto" split choice in AutoTrain
+                        "col_mapping": col_mapping,
+                        "load_config": {"max_size_bytes": 0, "shuffle": False},
+                    }
+                    data_json_resp = http_post(
+                        path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
+                        payload=data_payload,
                         token=HF_TOKEN,
                         domain=AUTOTRAIN_BACKEND_API,
+                        params={
+                            "type": "dataset",
+                            "config_name": selected_config,
+                            "split_name": selected_split,
+                        },
                     ).json()
-                    print(f"INFO -- AutoTrain job response: {train_json_resp}")
-                    if train_json_resp["success"]:
-                        train_eval_index = {
-                            "train-eval-index": [
-                                {
-                                    "config": selected_config,
-                                    "task": AUTOTRAIN_TASK_TO_HUB_TASK[selected_task],
-                                    "task_id": selected_task,
-                                    "splits": {"eval_split": selected_split},
-                                    "col_mapping": col_mapping,
-                                }
-                            ]
-                        }
-                        selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
-                        dataset_card_url = get_dataset_card_url(selected_dataset)
-                        st.success("✅ Successfully submitted evaluation job!")
-                        st.markdown(
-                            f"""
-                        Evaluation can take up to 1 hour to complete, so grab a ☕️ or 🍵 while you wait:
+                    print(f"INFO -- Dataset creation response: {data_json_resp}")
+                    if data_json_resp["download_status"] == 1:
+                        train_json_resp = http_get(
+                            path=f"/projects/{project_json_resp['id']}/data/start_process",
+                            token=HF_TOKEN,
+                            domain=AUTOTRAIN_BACKEND_API,
+                        ).json()
+                        print(f"INFO -- AutoTrain job response: {train_json_resp}")
+                        if train_json_resp["success"]:
+                            train_eval_index = {
+                                "train-eval-index": [
+                                    {
+                                        "config": selected_config,
+                                        "task": AUTOTRAIN_TASK_TO_HUB_TASK[selected_task],
+                                        "task_id": selected_task,
+                                        "splits": {"eval_split": selected_split},
+                                        "col_mapping": col_mapping,
+                                    }
+                                ]
+                            }
+                            selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
+                            dataset_card_url = get_dataset_card_url(selected_dataset)
+                            st.success("✅ Successfully submitted evaluation job!")
+                            st.markdown(
+                                f"""
+                            Evaluation can take up to 1 hour to complete, so grab a ☕️ or 🍵 while you wait:
 
-                        * 🔔 A \
-                            [Hub pull request](https://huggingface.co/docs/hub/repositories-pull-requests-discussions)\
-                                with the evaluation results will be opened for each model you selected. \
-                                Check your email for notifications.
-                        * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) \
-                            to view the results from your submission once the Hub pull request is merged.
-                        * 🥱 Tired of configuring evaluations? Add the following metadata to the \
-                            [dataset card]({dataset_card_url}) to enable 1-click evaluations:
-                        """
-                        )
-                        st.markdown(
-                            f"""
-                        ```yaml
-                        {selected_metadata}
-                        """
-                        )
-                        print("INFO -- Pushing evaluation job logs to the Hub")
-                        evaluation_log = {}
-                        evaluation_log["payload"] = project_payload
-                        evaluation_log["project_creation_response"] = project_json_resp
-                        evaluation_log["dataset_creation_response"] = data_json_resp
-                        evaluation_log["autotrain_job_response"] = train_json_resp
-                        commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
-                    else:
-                        st.error("🙈 Oh no, there was an error submitting your evaluation job!")
-        else:
-            st.warning("⚠️ No models were selected for evaluation!")
+                            * 🔔 A [Hub pull request](https://huggingface.co/docs/hub/repositories-pull-requests-discussions) with the evaluation results will be opened for each model you selected. Check your email for notifications.
+                            * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) to view the results from your submission once the Hub pull request is merged.
+                            * 🥱 Tired of configuring evaluations? Add the following metadata to the [dataset card]({dataset_card_url}) to enable 1-click evaluations:
+                            """  # noqa
+                            )
+                            st.markdown(
+                                f"""
+                            ```yaml
+                            {selected_metadata}
+                            """
+                            )
+                            print("INFO -- Pushing evaluation job logs to the Hub")
+                            evaluation_log = {}
+                            evaluation_log["payload"] = project_payload
+                            evaluation_log["project_creation_response"] = project_json_resp
+                            evaluation_log["dataset_creation_response"] = data_json_resp
+                            evaluation_log["autotrain_job_response"] = train_json_resp
+                            commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
+                        else:
+                            st.error("🙈 Oh no, there was an error submitting your evaluation job!")
+            else:
+                st.warning("⚠️ No models left to evaluate! Please select other models and try again.")
