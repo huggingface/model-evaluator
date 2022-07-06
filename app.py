@@ -1,5 +1,4 @@
 import os
-import uuid
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +12,7 @@ from evaluation import filter_evaluated_models
 from utils import (
     AUTOTRAIN_TASK_TO_HUB_TASK,
     commit_evaluation_log,
+    create_autotrain_project_name,
     format_col_mapping,
     get_compatible_models,
     get_dataset_card_url,
@@ -459,10 +459,9 @@ with st.form(key="form"):
             )
             print("INFO -- Selected models after filter:", selected_models)
             if len(selected_models) > 0:
-                project_id = str(uuid.uuid4())[:8]
                 project_payload = {
                     "username": AUTOTRAIN_USERNAME,
-                    "proj_name": f"eval-project-{project_id}",
+                    "proj_name": create_autotrain_project_name(selected_dataset),
                     "task": TASK_TO_ID[selected_task],
                     "config": {
                         "language": AUTOTRAIN_TASK_TO_LANG[selected_task]
