@@ -79,6 +79,13 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
         A list of model IDs, sorted alphabetically.
     """
     compatible_models = []
+    # Allow any summarization model to be used for summarization tasks
+    if task == "summarization":
+        model_filter = ModelFilter(
+            task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
+            library=["transformers", "pytorch"],
+        )
+        compatible_models.extend(HfApi().list_models(filter=model_filter))
     # Include models trained on SQuAD datasets, since these can be evaluated on
     # other SQuAD-like datasets
     if task == "extractive_question_answering":
