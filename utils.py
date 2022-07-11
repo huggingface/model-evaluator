@@ -193,7 +193,7 @@ def get_dataset_card_url(dataset_id: str) -> str:
 def create_autotrain_project_name(dataset_id: str) -> str:
     """Creates an AutoTrain project name for the given dataset ID."""
     # Project names cannot have "/", so we need to format community datasets accordingly
-    dataset_id_formatted = dataset_id.replace("/", "--")
+    dataset_id_formatted = dataset_id.replace("/", "__")
     # Project names need to be unique, so we append a random string to guarantee this
     project_id = str(uuid.uuid4())[:8]
     return f"eval-project-{dataset_id_formatted}-{project_id}"
