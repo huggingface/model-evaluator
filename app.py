@@ -37,7 +37,7 @@ TASK_TO_ID = {
     "binary_classification": 1,
     "multi_class_classification": 2,
     "entity_extraction": 4,
-    # "extractive_question_answering": 5, # Disabled until we have SQuAD metrics support
+    "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
 }
@@ -51,7 +51,7 @@ TASK_TO_DEFAULT_METRICS = {
         "accuracy",
     ],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
-    "extractive_question_answering": [],
+    "extractive_question_answering": ["f1", "exact_match"],
     "translation": ["sacrebleu"],
     "summarization": ["rouge1", "rouge2", "rougeL", "rougeLsum"],
     "image_binary_classification": ["f1", "precision", "recall", "auc", "accuracy"],
@@ -71,7 +71,7 @@ AUTOTRAIN_TASK_TO_LANG = {
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
-UNSUPPORTED_TASKS = ["extractive_question_answering"]
+UNSUPPORTED_TASKS = []
 
 # Extracted from utils.get_supported_metrics
 # Hardcoded for now due to speed / caching constraints
