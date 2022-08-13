@@ -62,7 +62,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
-    "zero_shot_classification": ["f1", "precision", "recall", "accuracy"]
+    "zero_shot_classification": ["accuracy", "loss"]
 }
 
 AUTOTRAIN_TASK_TO_LANG = {
