@@ -40,6 +40,7 @@ TASK_TO_ID = {
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
+    "zero_shot_classification": 22,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -61,6 +62,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
+    "zero_shot_classification": ["f1", "precision", "recall", "accuracy"]
 }
 
 AUTOTRAIN_TASK_TO_LANG = {
@@ -267,6 +269,39 @@ with st.expander("Advanced configuration"):
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
             col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "zero_shot_classification":
+        with col1:
+            st.markdown("`text` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`classes` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text_col = st.selectbox(
+                "This column should contain the text to be classified",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+            )
+            classes_col = st.selectbox(
+                "This column should contain the classes associated with the text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "classes")) if metadata is not None else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the index of the correct class",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+            )
+            col_mapping[text_col] = "text"
+            col_mapping[classes_col] = "classes"
             col_mapping[target_col] = "target"
 
     elif selected_task == "entity_extraction":
