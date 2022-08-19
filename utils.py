@@ -25,7 +25,7 @@ HUB_TASK_TO_AUTOTRAIN_TASK = {v: k for k, v in AUTOTRAIN_TASK_TO_HUB_TASK.items(
 LOGS_REPO = "evaluation-job-logs"
 
 
-def get_auth_headers(token: str, prefix: str = "autonlp"):
+def get_auth_headers(token: str, prefix: str = "Bearer"):
     return {"Authorization": f"{prefix} {token}"}
 
 
