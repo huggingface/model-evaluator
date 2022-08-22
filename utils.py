@@ -12,6 +12,7 @@ from tqdm import tqdm
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
     "multi_class_classification": "text-classification",
+    "natural_language_inference": "text-classification",
     "entity_extraction": "token-classification",
     "extractive_question_answering": "question-answering",
     "translation": "translation",

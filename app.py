@@ -36,6 +36,7 @@ TASK_TO_ID = {
     "image_multi_class_classification": 18,
     "binary_classification": 1,
     "multi_class_classification": 2,
+    "natural_language_inference": 22,
     "entity_extraction": 4,
     "extractive_question_answering": 5,
     "translation": 6,
@@ -50,6 +51,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
+    "natural_language_inference": ["f1", "precision", "recall", "auc", "accuracy"],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
     "extractive_question_answering": ["f1", "exact_match"],
     "translation": ["sacrebleu"],
@@ -117,9 +119,17 @@ SUPPORTED_METRICS = [
     "jordyvl/ece",
     "lvwerra/ai4code",
     "lvwerra/amex",
-    "lvwerra/test",
-    "lvwerra/test_metric",
 ]
+
+
+def get_config_metadata(config, metadata=None):
+    if metadata is None:
+        return None
+    config_metadata = [m for m in metadata if m["config"] == config]
+    if len(config_metadata) == 1:
+        return config_metadata[0]
+    else:
+        return None
 
 
 #######
@@ -267,6 +277,47 @@ with st.expander("Advanced configuration"):
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
             col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    col_mapping = {}
+    if selected_task in ["natural_language_inference"]:
+        config_metadata = get_config_metadata(selected_config, metadata)
+        with col1:
+            st.markdown("`text1` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`text2` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text1_col = st.selectbox(
+                "This column should contain the first text passage to be classified",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text1"))
+                if config_metadata is not None
+                else 0,
+            )
+            text2_col = st.selectbox(
+                "This column should contain the second text passage to be classified",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text2"))
+                if config_metadata is not None
+                else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the labels associated with the text",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
+            )
+            col_mapping[text1_col] = "text1"
+            col_mapping[text2_col] = "text2"
             col_mapping[target_col] = "target"
 
     elif selected_task == "entity_extraction":
