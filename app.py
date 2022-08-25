@@ -510,8 +510,8 @@ with st.form(key="form"):
                     ).json()
                     print(f"INFO -- Dataset creation response: {data_json_resp}")
                     if data_json_resp["download_status"] == 1:
-                        train_json_resp = http_get(
-                            path=f"/projects/{project_json_resp['id']}/data/start_process",
+                        train_json_resp = http_post(
+                            path=f"/projects/{project_json_resp['id']}/data/start_processing",
                             token=HF_TOKEN,
                             domain=AUTOTRAIN_BACKEND_API,
                         ).json()
@@ -548,6 +548,8 @@ with st.form(key="form"):
                             )
                             print("INFO -- Pushing evaluation job logs to the Hub")
                             evaluation_log = {}
+                            evaluation_log["project_id"] = project_json_resp["id"]
+                            evaluation_log["is_evaluated"] = False
                             evaluation_log["payload"] = project_payload
                             evaluation_log["project_creation_response"] = project_json_resp
                             evaluation_log["dataset_creation_response"] = data_json_resp
