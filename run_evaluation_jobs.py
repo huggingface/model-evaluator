@@ -28,6 +28,7 @@ def main():
     # Filter IDs for appropriate AutoTrain env (staging vs prod)
     projects_df = projects_df.copy().query(f"autotrain_env == '{AUTOTRAIN_ENV}'")
     projects_to_approve = projects_df["project_id"].astype(int).tolist()
+    failed_approvals = []
     print(f"🚀 Found {len(projects_to_approve)} evaluation projects to approve!")
 
     for project_id in projects_to_approve:
@@ -37,7 +38,7 @@ def main():
                 path=f"/projects/{project_id}",
                 token=HF_TOKEN,
                 domain=AUTOTRAIN_BACKEND_API,
-            ).json()
+            ).json()q
             print(project_info)
             # Only start evaluation for projects with completed data processing (status=3)
             if project_info["status"] == 3 and project_info["training_status"] == "not_started":
@@ -52,7 +53,11 @@ def main():
         except Exception as e:
             print(f"There was a problem obtaining the project info for project ID {project_id}")
             print(f"Error message: {e}")
+            failed_approvals.append(project_id)
             pass
+
+    if len(failed_approvals) > 0:
+        print(f"🚨 Failed to approve {len(failed_approvals)} projects: {failed_approvals}")
 
 
 if __name__ == "__main__":
