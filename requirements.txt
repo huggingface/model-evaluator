@@ -4,7 +4,7 @@ streamlit==1.10.0
 datasets<2.3
 evaluate<0.2
 jsonlines
-typer[rich]
+typer
 # Dataset specific deps
 py7zr<0.19
 openpyxl<3.1

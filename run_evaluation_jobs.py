@@ -4,7 +4,6 @@ from pathlib import Path
 import typer
 from datasets import load_dataset
 from dotenv import load_dotenv
-from rich import print
 
 from utils import http_get, http_post
 
@@ -22,7 +21,7 @@ else:
 
 
 def main():
-    logs_df = load_dataset("autoevaluate/evaluation-job-logs", use_auth_token=True, split="train").to_pandas()
+    logs_df = load_dataset("autoevaluate/evaluation-job-logs", use_auth_token=HF_TOKEN, split="train").to_pandas()
     # Filter out legacy AutoTrain submissions prior to project approvals requirement
     projects_df = logs_df.copy()[(~logs_df["project_id"].isnull())]
     # Filter IDs for appropriate AutoTrain env (staging vs prod)
