@@ -39,7 +39,7 @@ pip install -r requirements.txt
 Next, copy the example file of environment variables:
 
 ```
-cp .env.examples .env
+cp .env.template .env
 ```
 
 and set the `HF_TOKEN` variable with a valid API token from the `autoevaluator` user. Finally, spin up the application by running:
