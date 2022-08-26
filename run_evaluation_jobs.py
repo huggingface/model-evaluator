@@ -38,6 +38,7 @@ def main():
                 token=HF_TOKEN,
                 domain=AUTOTRAIN_BACKEND_API,
             ).json()
+            print(project_info)
             # Only start evaluation for projects with completed data processing (status=3)
             if project_info["status"] == 3 and project_info["training_status"] == "not_started":
                 train_job_resp = http_post(
