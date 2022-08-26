@@ -12,7 +12,6 @@ if Path(".env").is_file():
     load_dotenv(".env")
 
 HF_TOKEN = os.getenv("HF_TOKEN")
-AUTOTRAIN_TOKEN = os.getenv("AUTOTRAIN_TOKEN")
 AUTOTRAIN_USERNAME = os.getenv("AUTOTRAIN_USERNAME")
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 
@@ -24,15 +23,15 @@ else:
 
 def main():
     logs_df = load_dataset("autoevaluate/evaluation-job-logs", use_auth_token=True, split="train").to_pandas()
-    # Filter out
-    #   - legacy AutoTrain submissions prior to project approvals was implemented
-    #   - submissions for appropriate AutoTrain environment (staging vs prod)
-    projects_df = logs_df.copy()[
-        (~logs_df["project_id"].isnull()) & (logs_df.query(f"autotrain_env == '{AUTOTRAIN_ENV}'"))
-    ]
+    # Filter out legacy AutoTrain submissions prior to project approvals requirement
+    projects_df = logs_df.copy()[(~logs_df["project_id"].isnull())]
+    # Filter IDs for appropriate AutoTrain env (staging vs prod)
+    projects_df = projects_df.copy().query(f"autotrain_env == '{AUTOTRAIN_ENV}'")
     projects_to_approve = projects_df["project_id"].astype(int).tolist()
+    print(f"🚀 Found {len(projects_to_approve)} evaluation projects to approve!")
 
     for project_id in projects_to_approve:
+        print(f"Attempting to evaluate project ID {project_id} ...")
         try:
             project_info = http_get(
                 path=f"/projects/{project_id}",
@@ -46,8 +45,9 @@ def main():
                     domain=AUTOTRAIN_BACKEND_API,
                 ).json()
                 print(f"🏃‍♂️ Project {project_id} approval response: {train_job_resp}")
-        except:
+        except Exception as e:
             print(f"There was a problem obtaining the project info for project ID {project_id}")
+            print(f"Error message: {e}")
             pass
 
 
