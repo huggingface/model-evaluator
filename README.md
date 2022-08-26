@@ -39,7 +39,7 @@ pip install -r requirements.txt
 Next, copy the example file of environment variables:
 
 ```
-cp .env.examples .env
+cp .env.template .env
 ```
 
 and set the `HF_TOKEN` variable with a valid API token from the `autoevaluator` user. Finally, spin up the application by running:
@@ -53,5 +53,11 @@ streamlit run app.py
 Models are evaluated by AutoTrain, with the payload sent to the `AUTOTRAIN_BACKEND_API` environment variable. The current configuration for evaluation jobs running on Spaces is:
 
 ```
-AUTOTRAIN_BACKEND_API=https://api.autotrain.huggingface.co
+AUTOTRAIN_BACKEND_API=https://api-staging.autotrain.huggingface.co
+```
+
+To evaluate models with a _local_ instance of AutoTrain, change the environment to:
+
+```
+AUTOTRAIN_BACKEND_API=http://localhost:8000
 ```
