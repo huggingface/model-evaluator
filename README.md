@@ -53,7 +53,7 @@ streamlit run app.py
 Models are evaluated by AutoTrain, with the payload sent to the `AUTOTRAIN_BACKEND_API` environment variable. The current configuration for evaluation jobs running on Spaces is:
 
 ```
-AUTOTRAIN_BACKEND_API=https://api.autotrain.huggingface.co
+AUTOTRAIN_BACKEND_API=https://api-staging.autotrain.huggingface.co
 ```
 
 To evaluate models with a _local_ instance of AutoTrain, change the environment to:
