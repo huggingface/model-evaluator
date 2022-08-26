@@ -23,6 +23,8 @@ jobs:
 
       - name: Execute scoring script
         env:
-          HF_TOKEN: ${{ secrets.HF_GEM_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          AUTOTRAIN_USERNAME: ${{ secrets.AUTOTRAIN_USERNAME }}
+          AUTOTRAIN_BACKEND_API: ${{ secrets.AUTOTRAIN_BACKEND_API }}
         run: |
           HF_TOKEN=$HF_TOKEN AUTOTRAIN_USERNAME=$AUTOTRAIN_USERNAME AUTOTRAIN_BACKEND_API=$AUTOTRAIN_BACKEND_API python run_evaluation_jobs.py
