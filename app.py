@@ -538,7 +538,7 @@ with st.form(key="form"):
                             ).json()
                             st.success("✅  Data processing and project approval complete - go forth and evaluate!")
                         else:
-                            # Prod/staging submissions are evaluated in a cron job via the run_evaluation_jobs.py script
+                            # Prod/staging submissions are evaluated in a cron job via run_evaluation_jobs.py
                             print(f"INFO -- AutoTrain job response: {train_json_resp}")
                             if train_json_resp["success"]:
                                 train_eval_index = {
