@@ -55,3 +55,9 @@ Models are evaluated by AutoTrain, with the payload sent to the `AUTOTRAIN_BACKE
 ```
 AUTOTRAIN_BACKEND_API=https://api.autotrain.huggingface.co
 ```
+
+To evaluate models with a _local_ instance of AutoTrain, change the environment to:
+
+```
+AUTOTRAIN_BACKEND_API=http://localhost:8000
+```
