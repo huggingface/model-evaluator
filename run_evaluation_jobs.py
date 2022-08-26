@@ -49,7 +49,7 @@ def main():
                 ).json()
                 print(f"🤖 Project {project_id} approval response: {train_job_resp}")
             else:
-                print(f"💪 Project {project_id} has already been evaluated. Skipping ...")
+                print(f"💪 Project {project_id} either not ready or has already been evaluated. Skipping ...")
         except Exception as e:
             print(f"There was a problem obtaining the project info for project ID {project_id}")
             print(f"Error message: {e}")
