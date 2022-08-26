@@ -18,7 +18,7 @@ AUTOTRAIN_TASK_TO_HUB_TASK = {
     "summarization": "summarization",
     "image_binary_classification": "image-classification",
     "image_multi_class_classification": "image-classification",
-    "zero_shot_classification": "text-generation"
+    "zero_shot_classification": "text-generation",
 }
 
 
