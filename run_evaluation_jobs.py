@@ -21,6 +21,7 @@ else:
 
 
 def main():
+    print(f"💡 Starting jobs on {AUTOTRAIN_ENV} environment")
     logs_df = load_dataset("autoevaluate/evaluation-job-logs", use_auth_token=HF_TOKEN, split="train").to_pandas()
     # Filter out legacy AutoTrain submissions prior to project approvals requirement
     projects_df = logs_df.copy()[(~logs_df["project_id"].isnull())]
