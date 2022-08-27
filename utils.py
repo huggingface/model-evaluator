@@ -18,7 +18,7 @@ AUTOTRAIN_TASK_TO_HUB_TASK = {
     "summarization": "summarization",
     "image_binary_classification": "image-classification",
     "image_multi_class_classification": "image-classification",
-    "zero_shot_classification": "text-generation",
+    "text_zero_shot_classification": "text-generation",
 }
 
 
@@ -82,8 +82,8 @@ def get_compatible_models(task: str, dataset_ids: List[str]) -> List[str]:
     """
     compatible_models = []
     # Allow any summarization model to be used for summarization tasks
-    # and allow any text-generation model to be used for zero_shot_classification
-    if task in ("summarization", "zero_shot_classification"):
+    # and allow any text-generation model to be used for text_zero_shot_classification
+    if task in ("summarization", "text_zero_shot_classification"):
         model_filter = ModelFilter(
             task=AUTOTRAIN_TASK_TO_HUB_TASK[task],
             library=["transformers", "pytorch"],

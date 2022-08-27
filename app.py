@@ -40,7 +40,7 @@ TASK_TO_ID = {
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
-    "zero_shot_classification": 23,
+    "text_zero_shot_classification": 23,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -62,7 +62,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
-    "zero_shot_classification": ["accuracy", "loss"],
+    "text_zero_shot_classification": ["accuracy", "loss"],
 }
 
 AUTOTRAIN_TASK_TO_LANG = {
@@ -271,7 +271,7 @@ with st.expander("Advanced configuration"):
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
 
-    elif selected_task == "zero_shot_classification":
+    elif selected_task == "text_zero_shot_classification":
         with col1:
             st.markdown("`text` column")
             st.text("")
