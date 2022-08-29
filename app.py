@@ -275,7 +275,7 @@ with st.expander("Advanced configuration"):
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
 
-    elif selected_task == "zero_shot_classification":
+    elif selected_task == "text_zero_shot_classification":
         with col1:
             st.markdown("`text` column")
             st.text("")
@@ -348,39 +348,6 @@ with st.expander("Advanced configuration"):
             )
             col_mapping[text1_col] = "text1"
             col_mapping[text2_col] = "text2"
-            col_mapping[target_col] = "target"
-
-    elif selected_task == "text_zero_shot_classification":
-        with col1:
-            st.markdown("`text` column")
-            st.text("")
-            st.text("")
-            st.text("")
-            st.text("")
-            st.markdown("`classes` column")
-            st.text("")
-            st.text("")
-            st.text("")
-            st.text("")
-            st.markdown("`target` column")
-        with col2:
-            text_col = st.selectbox(
-                "This column should contain the text to be classified",
-                col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
-            )
-            classes_col = st.selectbox(
-                "This column should contain the classes associated with the text",
-                col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "classes")) if metadata is not None else 0,
-            )
-            target_col = st.selectbox(
-                "This column should contain the index of the correct class",
-                col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
-            )
-            col_mapping[text_col] = "text"
-            col_mapping[classes_col] = "classes"
             col_mapping[target_col] = "target"
 
     elif selected_task == "entity_extraction":
