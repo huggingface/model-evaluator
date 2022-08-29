@@ -12,6 +12,7 @@ from tqdm import tqdm
 AUTOTRAIN_TASK_TO_HUB_TASK = {
     "binary_classification": "text-classification",
     "multi_class_classification": "text-classification",
+    "natural_language_inference": "text-classification",
     "entity_extraction": "token-classification",
     "extractive_question_answering": "question-answering",
     "translation": "translation",
@@ -197,3 +198,14 @@ def create_autotrain_project_name(dataset_id: str) -> str:
     # Project names need to be unique, so we append a random string to guarantee this
     project_id = str(uuid.uuid4())[:8]
     return f"eval-project-{dataset_id_formatted}-{project_id}"
+
+
+def get_config_metadata(config: str, metadata: List[Dict] = None) -> Union[Dict, None]:
+    """Gets the dataset card metadata for the given config."""
+    if metadata is None:
+        return None
+    config_metadata = [m for m in metadata if m["config"] == config]
+    if len(config_metadata) >= 1:
+        return config_metadata[0]
+    else:
+        return None
