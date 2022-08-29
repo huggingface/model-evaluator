@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +16,7 @@ from utils import (
     create_autotrain_project_name,
     format_col_mapping,
     get_compatible_models,
+    get_config_metadata,
     get_dataset_card_url,
     get_key,
     get_metadata,
@@ -36,6 +38,7 @@ TASK_TO_ID = {
     "image_multi_class_classification": 18,
     "binary_classification": 1,
     "multi_class_classification": 2,
+    "natural_language_inference": 22,
     "entity_extraction": 4,
     "extractive_question_answering": 5,
     "translation": 6,
@@ -51,6 +54,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
+    "natural_language_inference": ["f1", "precision", "recall", "auc", "accuracy"],
     "entity_extraction": ["precision", "recall", "f1", "accuracy"],
     "extractive_question_answering": ["f1", "exact_match"],
     "translation": ["sacrebleu"],
@@ -73,7 +77,6 @@ AUTOTRAIN_TASK_TO_LANG = {
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
-UNSUPPORTED_TASKS = []
 
 # Extracted from utils.get_supported_metrics
 # Hardcoded for now due to speed / caching constraints
@@ -119,8 +122,6 @@ SUPPORTED_METRICS = [
     "jordyvl/ece",
     "lvwerra/ai4code",
     "lvwerra/amex",
-    "lvwerra/test",
-    "lvwerra/test_metric",
 ]
 
 
@@ -181,10 +182,6 @@ if metadata is None:
 
 with st.expander("Advanced configuration"):
     # Select task
-    # Hack to filter for unsupported tasks
-    # TODO(lewtun): remove this once we have SQuAD metrics support
-    if metadata is not None and metadata[0]["task_id"] in UNSUPPORTED_TASKS:
-        metadata = None
     selected_task = st.selectbox(
         "Select a task",
         SUPPORTED_TASKS,
@@ -202,6 +199,9 @@ with st.expander("Advanced configuration"):
             See the [docs](https://huggingface.co/docs/datasets/master/en/load_hub#configurations) for more details.
             """,
     )
+    # Some datasets have multiple metadata (one per config), so we grab the one associated with the selected config
+    config_metadata = get_config_metadata(selected_config, metadata)
+    print(f"INFO -- Config metadata: {config_metadata}")
 
     # Select splits
     splits_resp = http_get(
@@ -216,8 +216,8 @@ with st.expander("Advanced configuration"):
             if split["config"] == selected_config:
                 split_names.append(split["split"])
 
-        if metadata is not None:
-            eval_split = metadata[0]["splits"].get("eval_split", None)
+        if config_metadata is not None:
+            eval_split = config_metadata["splits"].get("eval_split", None)
         else:
             eval_split = None
         selected_split = st.selectbox(
@@ -261,14 +261,93 @@ with st.expander("Advanced configuration"):
             text_col = st.selectbox(
                 "This column should contain the text to be classified",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text"))
+                if config_metadata is not None
+                else 0,
             )
             target_col = st.selectbox(
                 "This column should contain the labels associated with the text",
                 col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
+            )
+            col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "zero_shot_classification":
+        with col1:
+            st.markdown("`text` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`classes` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text_col = st.selectbox(
+                "This column should contain the text to be classified",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+            )
+            classes_col = st.selectbox(
+                "This column should contain the classes associated with the text",
+                col_names,
+                index=col_names.index(get_key(metadata[0]["col_mapping"], "classes")) if metadata is not None else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the index of the correct class",
+                col_names,
                 index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
             )
             col_mapping[text_col] = "text"
+            col_mapping[classes_col] = "classes"
+            col_mapping[target_col] = "target"
+
+    if selected_task in ["natural_language_inference"]:
+        config_metadata = get_config_metadata(selected_config, metadata)
+        with col1:
+            st.markdown("`text1` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`text2` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text1_col = st.selectbox(
+                "This column should contain the first text passage to be classified",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text1"))
+                if config_metadata is not None
+                else 0,
+            )
+            text2_col = st.selectbox(
+                "This column should contain the second text passage to be classified",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text2"))
+                if config_metadata is not None
+                else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the labels associated with the text",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
+            )
+            col_mapping[text1_col] = "text1"
+            col_mapping[text2_col] = "text2"
             col_mapping[target_col] = "target"
 
     elif selected_task == "text_zero_shot_classification":
@@ -316,12 +395,16 @@ with st.expander("Advanced configuration"):
             tokens_col = st.selectbox(
                 "This column should contain the array of tokens to be classified",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "tokens")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "tokens"))
+                if config_metadata is not None
+                else 0,
             )
             tags_col = st.selectbox(
                 "This column should contain the labels associated with each part of the text",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "tags")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "tags"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[tokens_col] = "tokens"
             col_mapping[tags_col] = "tags"
@@ -338,12 +421,16 @@ with st.expander("Advanced configuration"):
             text_col = st.selectbox(
                 "This column should contain the text to be translated",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "source")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "source"))
+                if config_metadata is not None
+                else 0,
             )
             target_col = st.selectbox(
                 "This column should contain the target translation",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[text_col] = "source"
             col_mapping[target_col] = "target"
@@ -360,19 +447,23 @@ with st.expander("Advanced configuration"):
             text_col = st.selectbox(
                 "This column should contain the text to be summarized",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text"))
+                if config_metadata is not None
+                else 0,
             )
             target_col = st.selectbox(
                 "This column should contain the target summary",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
 
     elif selected_task == "extractive_question_answering":
-        if metadata is not None:
-            col_mapping = metadata[0]["col_mapping"]
+        if config_metadata is not None:
+            col_mapping = config_metadata["col_mapping"]
             # Hub YAML parser converts periods to hyphens, so we remap them here
             col_mapping = format_col_mapping(col_mapping)
         with col1:
@@ -396,22 +487,24 @@ with st.expander("Advanced configuration"):
             context_col = st.selectbox(
                 "This column should contain the question's context",
                 col_names,
-                index=col_names.index(get_key(col_mapping, "context")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "context")) if config_metadata is not None else 0,
             )
             question_col = st.selectbox(
                 "This column should contain the question to be answered, given the context",
                 col_names,
-                index=col_names.index(get_key(col_mapping, "question")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "question")) if config_metadata is not None else 0,
             )
             answers_text_col = st.selectbox(
                 "This column should contain example answers to the question, extracted from the context",
                 col_names,
-                index=col_names.index(get_key(col_mapping, "answers.text")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "answers.text")) if config_metadata is not None else 0,
             )
             answers_start_col = st.selectbox(
                 "This column should contain the indices in the context of the first character of each `answers.text`",
                 col_names,
-                index=col_names.index(get_key(col_mapping, "answers.answer_start")) if metadata is not None else 0,
+                index=col_names.index(get_key(col_mapping, "answers.answer_start"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[context_col] = "context"
             col_mapping[question_col] = "question"
@@ -429,12 +522,16 @@ with st.expander("Advanced configuration"):
             image_col = st.selectbox(
                 "This column should contain the images to be classified",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "image")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "image"))
+                if config_metadata is not None
+                else 0,
             )
             target_col = st.selectbox(
                 "This column should contain the labels associated with the images",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[image_col] = "image"
             col_mapping[target_col] = "target"
@@ -545,50 +642,77 @@ with st.form(key="form"):
                     ).json()
                     print(f"INFO -- Dataset creation response: {data_json_resp}")
                     if data_json_resp["download_status"] == 1:
-                        train_json_resp = http_get(
-                            path=f"/projects/{project_json_resp['id']}/data/start_process",
+                        train_json_resp = http_post(
+                            path=f"/projects/{project_json_resp['id']}/data/start_processing",
                             token=HF_TOKEN,
                             domain=AUTOTRAIN_BACKEND_API,
                         ).json()
-                        print(f"INFO -- AutoTrain job response: {train_json_resp}")
-                        if train_json_resp["success"]:
-                            train_eval_index = {
-                                "train-eval-index": [
-                                    {
-                                        "config": selected_config,
-                                        "task": AUTOTRAIN_TASK_TO_HUB_TASK[selected_task],
-                                        "task_id": selected_task,
-                                        "splits": {"eval_split": selected_split},
-                                        "col_mapping": col_mapping,
-                                    }
-                                ]
-                            }
-                            selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
-                            dataset_card_url = get_dataset_card_url(selected_dataset)
-                            st.success("✅ Successfully submitted evaluation job!")
-                            st.markdown(
-                                f"""
-                            Evaluation can take up to 1 hour to complete, so grab a ☕️ or 🍵 while you wait:
+                        # For local development we process and approve projects on-the-fly
+                        if "localhost" in AUTOTRAIN_BACKEND_API:
+                            with st.spinner("⏳ Waiting for data processing to complete ..."):
+                                is_data_processing_success = False
+                                while is_data_processing_success is not True:
+                                    project_status = http_get(
+                                        path=f"/projects/{project_json_resp['id']}",
+                                        token=HF_TOKEN,
+                                        domain=AUTOTRAIN_BACKEND_API,
+                                    ).json()
+                                    if project_status["status"] == 3:
+                                        is_data_processing_success = True
+                                    time.sleep(10)
 
-                            * 🔔 A [Hub pull request](https://huggingface.co/docs/hub/repositories-pull-requests-discussions) with the evaluation results will be opened for each model you selected. Check your email for notifications.
-                            * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) to view the results from your submission once the Hub pull request is merged.
-                            * 🥱 Tired of configuring evaluations? Add the following metadata to the [dataset card]({dataset_card_url}) to enable 1-click evaluations:
-                            """  # noqa
-                            )
-                            st.markdown(
-                                f"""
-                            ```yaml
-                            {selected_metadata}
-                            """
-                            )
-                            print("INFO -- Pushing evaluation job logs to the Hub")
-                            evaluation_log = {}
-                            evaluation_log["payload"] = project_payload
-                            evaluation_log["project_creation_response"] = project_json_resp
-                            evaluation_log["dataset_creation_response"] = data_json_resp
-                            evaluation_log["autotrain_job_response"] = train_json_resp
-                            commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
+                            # Approve training job
+                            train_job_resp = http_post(
+                                path=f"/projects/{project_json_resp['id']}/start_training",
+                                token=HF_TOKEN,
+                                domain=AUTOTRAIN_BACKEND_API,
+                            ).json()
+                            st.success("✅  Data processing and project approval complete - go forth and evaluate!")
                         else:
-                            st.error("🙈 Oh no, there was an error submitting your evaluation job!")
+                            # Prod/staging submissions are evaluated in a cron job via run_evaluation_jobs.py
+                            print(f"INFO -- AutoTrain job response: {train_json_resp}")
+                            if train_json_resp["success"]:
+                                train_eval_index = {
+                                    "train-eval-index": [
+                                        {
+                                            "config": selected_config,
+                                            "task": AUTOTRAIN_TASK_TO_HUB_TASK[selected_task],
+                                            "task_id": selected_task,
+                                            "splits": {"eval_split": selected_split},
+                                            "col_mapping": col_mapping,
+                                        }
+                                    ]
+                                }
+                                selected_metadata = yaml.dump(train_eval_index, sort_keys=False)
+                                dataset_card_url = get_dataset_card_url(selected_dataset)
+                                st.success("✅ Successfully submitted evaluation job!")
+                                st.markdown(
+                                    f"""
+                                Evaluation can take up to 1 hour to complete, so grab a ☕️ or 🍵 while you wait:
+
+                                * 🔔 A [Hub pull request](https://huggingface.co/docs/hub/repositories-pull-requests-discussions) with the evaluation results will be opened for each model you selected. Check your email for notifications.
+                                * 📊 Click [here](https://hf.co/spaces/autoevaluate/leaderboards?dataset={selected_dataset}) to view the results from your submission once the Hub pull request is merged.
+                                * 🥱 Tired of configuring evaluations? Add the following metadata to the [dataset card]({dataset_card_url}) to enable 1-click evaluations:
+                                """  # noqa
+                                )
+                                st.markdown(
+                                    f"""
+                                ```yaml
+                                {selected_metadata}
+                                """
+                                )
+                                print("INFO -- Pushing evaluation job logs to the Hub")
+                                evaluation_log = {}
+                                evaluation_log["project_id"] = project_json_resp["id"]
+                                evaluation_log["autotrain_env"] = (
+                                    "staging" if "staging" in AUTOTRAIN_BACKEND_API else "prod"
+                                )
+                                evaluation_log["payload"] = project_payload
+                                evaluation_log["project_creation_response"] = project_json_resp
+                                evaluation_log["dataset_creation_response"] = data_json_resp
+                                evaluation_log["autotrain_job_response"] = train_json_resp
+                                commit_evaluation_log(evaluation_log, hf_access_token=HF_TOKEN)
+                            else:
+                                st.error("🙈 Oh no, there was an error submitting your evaluation job!")
             else:
                 st.warning("⚠️ No models left to evaluate! Please select other models and try again.")

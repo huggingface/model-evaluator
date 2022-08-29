@@ -1,0 +1,30 @@
+name: Start evaluation jobs
+
+on:
+  schedule:
+    - cron:  '*/15 * * * *' # Start evaluations every 15th minute
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Python Environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Execute scoring script
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          AUTOTRAIN_USERNAME: ${{ secrets.AUTOTRAIN_USERNAME }}
+          AUTOTRAIN_BACKEND_API: ${{ secrets.AUTOTRAIN_BACKEND_API }}
+        run: |
+          HF_TOKEN=$HF_TOKEN AUTOTRAIN_USERNAME=$AUTOTRAIN_USERNAME AUTOTRAIN_BACKEND_API=$AUTOTRAIN_BACKEND_API python run_evaluation_jobs.py
