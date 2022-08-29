@@ -205,7 +205,7 @@ def get_config_metadata(config: str, metadata: List[Dict] = None) -> Union[Dict,
     if metadata is None:
         return None
     config_metadata = [m for m in metadata if m["config"] == config]
-    if len(config_metadata) == 1:
+    if len(config_metadata) >= 1:
         return config_metadata[0]
     else:
         return None

@@ -75,7 +75,6 @@ AUTOTRAIN_TASK_TO_LANG = {
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
-UNSUPPORTED_TASKS = []
 
 # Extracted from utils.get_supported_metrics
 # Hardcoded for now due to speed / caching constraints
@@ -198,7 +197,7 @@ with st.expander("Advanced configuration"):
             See the [docs](https://huggingface.co/docs/datasets/master/en/load_hub#configurations) for more details.
             """,
     )
-    # Get metadata for config
+    # Some datasets have multiple metadata (one per config), so we grab the one associated with the selected config
     config_metadata = get_config_metadata(selected_config, metadata)
     print(f"INFO -- Config metadata: {config_metadata}")
 
