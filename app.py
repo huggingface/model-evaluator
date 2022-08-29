@@ -273,7 +273,6 @@ with st.expander("Advanced configuration"):
             col_mapping[text_col] = "text"
             col_mapping[target_col] = "target"
 
-    col_mapping = {}
     if selected_task in ["natural_language_inference"]:
         config_metadata = get_config_metadata(selected_config, metadata)
         with col1:
