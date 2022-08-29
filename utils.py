@@ -191,13 +191,13 @@ def get_dataset_card_url(dataset_id: str) -> str:
         return f"https://github.com/huggingface/datasets/edit/master/datasets/{dataset_id}/README.md"
 
 
-def create_autotrain_project_name(dataset_id: str) -> str:
+def create_autotrain_project_name(dataset_id: str, dataset_config: str) -> str:
     """Creates an AutoTrain project name for the given dataset ID."""
     # Project names cannot have "/", so we need to format community datasets accordingly
     dataset_id_formatted = dataset_id.replace("/", "__")
     # Project names need to be unique, so we append a random string to guarantee this
-    project_id = str(uuid.uuid4())[:8]
-    return f"eval-project-{dataset_id_formatted}-{project_id}"
+    project_id = str(uuid.uuid4())[:6]
+    return f"eval-{dataset_id_formatted}-{dataset_config}-{project_id}"
 
 
 def get_config_metadata(config: str, metadata: List[Dict] = None) -> Union[Dict, None]:
