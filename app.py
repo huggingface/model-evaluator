@@ -560,7 +560,7 @@ with st.form(key="form"):
             if len(selected_models) > 0:
                 project_payload = {
                     "username": AUTOTRAIN_USERNAME,
-                    "proj_name": create_autotrain_project_name(selected_dataset),
+                    "proj_name": create_autotrain_project_name(selected_dataset, selected_config),
                     "task": TASK_TO_ID[selected_task],
                     "config": {
                         "language": AUTOTRAIN_TASK_TO_LANG[selected_task]
