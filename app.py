@@ -292,17 +292,23 @@ with st.expander("Advanced configuration"):
             text_col = st.selectbox(
                 "This column should contain the text to be classified",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "text")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text"))
+                if config_metadata is not None
+                else 0,
             )
             classes_col = st.selectbox(
                 "This column should contain the classes associated with the text",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "classes")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "classes"))
+                if config_metadata is not None
+                else 0,
             )
             target_col = st.selectbox(
                 "This column should contain the index of the correct class",
                 col_names,
-                index=col_names.index(get_key(metadata[0]["col_mapping"], "target")) if metadata is not None else 0,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
             )
             col_mapping[text_col] = "text"
             col_mapping[classes_col] = "classes"
