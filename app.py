@@ -229,7 +229,7 @@ with st.expander("Advanced configuration"):
 
     # Select columns
     rows_resp = http_get(
-        path="/rows",
+        path="/first-rows",
         domain=DATASETS_PREVIEW_API,
         params={
             "dataset": selected_dataset,
