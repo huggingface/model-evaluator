@@ -75,6 +75,8 @@ AUTOTRAIN_TASK_TO_LANG = {
     "image_multi_class_classification": "unk",
 }
 
+AUTOTRAIN_MACHINE = {"text_zero_shot_classification": "ml.g4dn.4xlarge"}
+
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
 
@@ -554,14 +556,14 @@ with st.form(key="form"):
             st.warning("Only 10 models can be evaluated at once. Please select fewer models and try again.")
         else:
             # Filter out previously evaluated models
-            # selected_models = filter_evaluated_models(
-            #     selected_models,
-            #     selected_task,
-            #     selected_dataset,
-            #     selected_config,
-            #     selected_split,
-            #     selected_metrics,
-            # )
+            selected_models = filter_evaluated_models(
+                selected_models,
+                selected_task,
+                selected_dataset,
+                selected_config,
+                selected_split,
+                selected_metrics,
+            )
             print("INFO -- Selected models after filter:", selected_models)
             if len(selected_models) > 0:
                 project_payload = {
@@ -574,8 +576,10 @@ with st.form(key="form"):
                         else "en",
                         "max_models": 5,
                         "instance": {
-                            "provider": "aws",
-                            "instance_type": "ml.g4dn.4xlarge",
+                            "provider": "sagemaker",
+                            "instance_type": AUTOTRAIN_MACHINE[selected_task]
+                            if selected_task in AUTOTRAIN_MACHINE.keys()
+                            else "ml.g4dn.4xlarge",
                             "max_runtime_seconds": 172800,
                             "num_instances": 1,
                             "disk_size_gb": 150,
@@ -603,7 +607,7 @@ with st.form(key="form"):
                         "load_config": {"max_size_bytes": 0, "shuffle": False},
                         "dataset_id": selected_dataset,
                         "dataset_config": selected_config,
-                        "dataset_split": selected_split
+                        "dataset_split": selected_split,
                     }
                     data_json_resp = http_post(
                         path=f"/projects/{project_json_resp['id']}/data/dataset",
