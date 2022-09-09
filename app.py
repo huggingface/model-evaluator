@@ -75,7 +75,7 @@ AUTOTRAIN_TASK_TO_LANG = {
     "image_multi_class_classification": "unk",
 }
 
-AUTOTRAIN_MACHINE = {"text_zero_shot_classification": "ml.g4dn.4xlarge"}
+AUTOTRAIN_MACHINE = {"text_zero_shot_classification": "r5.16x"}
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
@@ -579,7 +579,7 @@ with st.form(key="form"):
                             "provider": "sagemaker",
                             "instance_type": AUTOTRAIN_MACHINE[selected_task]
                             if selected_task in AUTOTRAIN_MACHINE.keys()
-                            else "ml.g4dn.4xlarge",
+                            else "p3",
                             "max_runtime_seconds": 172800,
                             "num_instances": 1,
                             "disk_size_gb": 150,
