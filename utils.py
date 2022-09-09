@@ -197,9 +197,11 @@ def create_autotrain_project_name(dataset_id: str, dataset_config: str) -> str:
     """Creates an AutoTrain project name for the given dataset ID."""
     # Project names cannot have "/", so we need to format community datasets accordingly
     dataset_id_formatted = dataset_id.replace("/", "__")
-    # Project names need to be unique, so we append a random string to guarantee this
-    project_id = str(uuid.uuid4())[:6]
-    return f"eval-{dataset_id_formatted}-{dataset_config}-{project_id}"
+    dataset_config_formatted = dataset_config.replace("--", "__")
+    # Project names need to be unique, so we append a random string to guarantee this while adhering to naming rules
+    basename = f"eval-{dataset_id_formatted}-{dataset_config_formatted}"
+    basename = basename[:60] if len(basename) > 60 else basename  # Hub naming limitation
+    return f"{basename}-{str(uuid.uuid4())[:6]}"
 
 
 def get_config_metadata(config: str, metadata: List[Dict] = None) -> Union[Dict, None]:
