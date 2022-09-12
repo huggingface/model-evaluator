@@ -43,6 +43,7 @@ TASK_TO_ID = {
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
+    "text_zero_shot_classification": 23,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -65,6 +66,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
+    "text_zero_shot_classification": ["accuracy", "loss"],
 }
 
 AUTOTRAIN_TASK_TO_LANG = {
@@ -72,6 +74,8 @@ AUTOTRAIN_TASK_TO_LANG = {
     "image_binary_classification": "unk",
     "image_multi_class_classification": "unk",
 }
+
+AUTOTRAIN_MACHINE = {"text_zero_shot_classification": "r5.16x"}
 
 
 SUPPORTED_TASKS = list(TASK_TO_ID.keys())
@@ -271,6 +275,45 @@ with st.expander("Advanced configuration"):
                 else 0,
             )
             col_mapping[text_col] = "text"
+            col_mapping[target_col] = "target"
+
+    elif selected_task == "text_zero_shot_classification":
+        with col1:
+            st.markdown("`text` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`classes` column")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.text("")
+            st.markdown("`target` column")
+        with col2:
+            text_col = st.selectbox(
+                "This column should contain the text to be classified",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "text"))
+                if config_metadata is not None
+                else 0,
+            )
+            classes_col = st.selectbox(
+                "This column should contain the classes associated with the text",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "classes"))
+                if config_metadata is not None
+                else 0,
+            )
+            target_col = st.selectbox(
+                "This column should contain the index of the correct class",
+                col_names,
+                index=col_names.index(get_key(config_metadata["col_mapping"], "target"))
+                if config_metadata is not None
+                else 0,
+            )
+            col_mapping[text_col] = "text"
+            col_mapping[classes_col] = "classes"
             col_mapping[target_col] = "target"
 
     if selected_task in ["natural_language_inference"]:
@@ -533,8 +576,10 @@ with st.form(key="form"):
                         else "en",
                         "max_models": 5,
                         "instance": {
-                            "provider": "aws",
-                            "instance_type": "ml.g4dn.4xlarge",
+                            "provider": "sagemaker",
+                            "instance_type": AUTOTRAIN_MACHINE[selected_task]
+                            if selected_task in AUTOTRAIN_MACHINE.keys()
+                            else "p3",
                             "max_runtime_seconds": 172800,
                             "num_instances": 1,
                             "disk_size_gb": 150,
@@ -560,17 +605,15 @@ with st.form(key="form"):
                         "split": 4,  # use "auto" split choice in AutoTrain
                         "col_mapping": col_mapping,
                         "load_config": {"max_size_bytes": 0, "shuffle": False},
+                        "dataset_id": selected_dataset,
+                        "dataset_config": selected_config,
+                        "dataset_split": selected_split,
                     }
                     data_json_resp = http_post(
-                        path=f"/projects/{project_json_resp['id']}/data/{selected_dataset}",
+                        path=f"/projects/{project_json_resp['id']}/data/dataset",
                         payload=data_payload,
                         token=HF_TOKEN,
                         domain=AUTOTRAIN_BACKEND_API,
-                        params={
-                            "type": "dataset",
-                            "config_name": selected_config,
-                            "split_name": selected_split,
-                        },
                     ).json()
                     print(f"INFO -- Dataset creation response: {data_json_resp}")
                     if data_json_resp["download_status"] == 1:
