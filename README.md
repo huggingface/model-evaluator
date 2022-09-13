@@ -27,6 +27,8 @@ The table below shows which tasks are currently supported for evaluation in the 
 | `summarization`                    |     ✅     |
 | `image_binary_classification`      |     ✅     |
 | `image_multi_class_classification` |     ✅     |
+| `text_zero_shot_evaluation`        |     ✅     |
+
 
 ## Installation
 
