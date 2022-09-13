@@ -576,7 +576,7 @@ with st.form(key="form"):
                         else "en",
                         "max_models": 5,
                         "instance": {
-                            "provider": "sagemaker",
+                            "provider": "sagemaker" if selected_task in AUTOTRAIN_MACHINE.keys() else "ovh",
                             "instance_type": AUTOTRAIN_MACHINE[selected_task]
                             if selected_task in AUTOTRAIN_MACHINE.keys()
                             else "p3",
