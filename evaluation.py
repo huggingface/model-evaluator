@@ -47,11 +47,11 @@ def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_
             dataset_split=dataset_split,
             metrics=frozenset(metrics),
         )
-        if evaluation_info in evaluation_infos:
-            st.info(
-                f"Model [`{model}`](https://huggingface.co/{model}) has already been evaluated on this configuration. \
-                    This model will be excluded from the evaluation job..."
-            )
-            models.remove(model)
+        # if evaluation_info in evaluation_infos:
+        #     st.info(
+        #         f"Model [`{model}`](https://huggingface.co/{model}) has already been evaluated on this configuration. \
+        #             This model will be excluded from the evaluation job..."
+        #     )
+        #     models.remove(model)
 
     return models
