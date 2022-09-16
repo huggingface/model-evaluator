@@ -43,7 +43,7 @@ TASK_TO_ID = {
     "extractive_question_answering": 5,
     "translation": 6,
     "summarization": 8,
-    # "text_zero_shot_classification": 23,
+    "text_zero_shot_classification": 23,
 }
 
 TASK_TO_DEFAULT_METRICS = {
@@ -66,7 +66,7 @@ TASK_TO_DEFAULT_METRICS = {
         "recall",
         "accuracy",
     ],
-    # "text_zero_shot_classification": ["accuracy", "loss"],
+    "text_zero_shot_classification": ["accuracy", "loss"],
 }
 
 AUTOTRAIN_TASK_TO_LANG = {
