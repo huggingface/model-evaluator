@@ -32,6 +32,9 @@ AUTOTRAIN_USERNAME = os.getenv("AUTOTRAIN_USERNAME")
 AUTOTRAIN_BACKEND_API = os.getenv("AUTOTRAIN_BACKEND_API")
 DATASETS_PREVIEW_API = os.getenv("DATASETS_PREVIEW_API")
 
+# Large models require more disk space to download
+DISK_NEEDED_FOR_LARGE_MODELS = {"opt-66b": 200}
+
 # Put image tasks on top
 TASK_TO_ID = {
     "image_binary_classification": 17,
@@ -566,6 +569,7 @@ with st.form(key="form"):
             )
             print("INFO -- Selected models after filter:", selected_models)
             if len(selected_models) > 0:
+                size_of_models_on_disk = sum([DISK_NEEDED_FOR_LARGE_MODELS.get(model) for model in selected_models])
                 project_payload = {
                     "username": AUTOTRAIN_USERNAME,
                     "proj_name": create_autotrain_project_name(selected_dataset, selected_config),
@@ -582,7 +586,7 @@ with st.form(key="form"):
                             else "p3",
                             "max_runtime_seconds": 172800,
                             "num_instances": 1,
-                            "disk_size_gb": 150,
+                            "disk_size_gb": max(size_of_models_on_disk, 150),
                         },
                         "evaluation": {
                             "metrics": selected_metrics,
