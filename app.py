@@ -569,7 +569,9 @@ with st.form(key="form"):
             )
             print("INFO -- Selected models after filter:", selected_models)
             if len(selected_models) > 0:
-                size_of_models_on_disk = sum([DISK_NEEDED_FOR_LARGE_MODELS.get(model) for model in selected_models])
+                size_of_models_on_disk = sum(
+                    filter(None, [DISK_NEEDED_FOR_LARGE_MODELS.get(model) for model in selected_models])
+                )
                 project_payload = {
                     "username": AUTOTRAIN_USERNAME,
                     "proj_name": create_autotrain_project_name(selected_dataset, selected_config),
