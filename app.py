@@ -582,7 +582,7 @@ with st.form(key="form"):
                             else "p3",
                             "max_runtime_seconds": 172800,
                             "num_instances": 1,
-                            "disk_size_gb": 150,
+                            "disk_size_gb": 200,
                         },
                         "evaluation": {
                             "metrics": selected_metrics,
