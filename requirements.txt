@@ -10,3 +10,5 @@ py7zr<0.19
 openpyxl<3.1
 # Dirty bug from Google
 protobuf<=3.20.1
+# Bug from Streamlit
+altair<5
