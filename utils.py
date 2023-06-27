@@ -6,7 +6,7 @@ import jsonlines
 import requests
 import streamlit as st
 from evaluate import load
-from huggingface_hub import HfApi, ModelFilter, Repository, dataset_info, list_metrics, create_repo
+from huggingface_hub import HfApi, ModelFilter, Repository, dataset_info, list_metrics
 from tqdm import tqdm
 
 AUTOTRAIN_TASK_TO_HUB_TASK = {
@@ -122,13 +122,6 @@ def format_col_mapping(col_mapping: dict) -> dict:
 
 
 def commit_evaluation_log(evaluation_log, hf_access_token=None):
-    create_repo(
-        repo_id=f"autoevaluate/{LOGS_REPO}",
-        repo_type="dataset",
-        exists_ok=True,
-        private=True,
-        token=hf_access_token,
-    )
     logs_repo_url = f"https://huggingface.co/datasets/autoevaluate/{LOGS_REPO}"
     logs_repo = Repository(
         local_dir=LOGS_REPO,
