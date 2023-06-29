@@ -1,4 +1,4 @@
-huggingface-hub<0.8
+huggingface_hub>=0.11
 python-dotenv
 streamlit==1.10.0
 datasets<2.3
@@ -10,3 +10,5 @@ py7zr<0.19
 openpyxl<3.1
 # Dirty bug from Google
 protobuf<=3.20.1
+# Bug from Streamlit
+altair<5

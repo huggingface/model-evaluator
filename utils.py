@@ -127,7 +127,6 @@ def commit_evaluation_log(evaluation_log, hf_access_token=None):
         local_dir=LOGS_REPO,
         clone_from=logs_repo_url,
         repo_type="dataset",
-        private=True,
         use_auth_token=hf_access_token,
     )
     logs_repo.git_pull()
