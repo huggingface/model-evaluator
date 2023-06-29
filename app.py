@@ -171,7 +171,7 @@ is_valid_dataset = http_get(
     domain=DATASETS_PREVIEW_API,
     params={"dataset": selected_dataset},
 ).json()
-if is_valid_dataset["valid"] is False:
+if is_valid_dataset["viewer"] is False and is_valid_dataset["preview"] is False:
     st.error(
         """The dataset you selected is not currently supported. Open a \
             [discussion](https://huggingface.co/spaces/autoevaluate/model-evaluator/discussions) for support."""
