@@ -29,9 +29,15 @@ def create_evaluation_info(dataset_info: DatasetInfo) -> int:
 
 
 def get_evaluation_infos():
+    evaluation_datasets = []
     filt = DatasetFilter(author="autoevaluate")
-    evaluation_datasets = HfApi().list_datasets(filter=filt, full=True)
-    return [create_evaluation_info(dset) for dset in evaluation_datasets]
+    autoevaluate_datasets = HfApi().list_datasets(filter=filt, full=True)
+    for dset in autoevaluate_datasets:
+        try:
+            evaluation_datasets.append(create_evaluation_info(dset))
+        except Exception as e:
+            print(f"Error processing dataset {dset}: {e}")
+    return evaluation_datasets
 
 
 def filter_evaluated_models(models, task, dataset_name, dataset_config, dataset_split, metrics):
