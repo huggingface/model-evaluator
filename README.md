@@ -12,6 +12,8 @@ app_file: app.py
 
 > Submit evaluation jobs to AutoTrain from the Hugging Face Hub
 
+**⚠️ This project has been archived. If you want to evaluate LLMs, checkout [this collection](https://huggingface.co/collections/clefourrier/llm-leaderboards-and-benchmarks-✨-64f99d2e11e92ca5568a7cce) of leaderboards.**
+
 ## Supported tasks
 
 The table below shows which tasks are currently supported for evaluation in the AutoTrain backend:
